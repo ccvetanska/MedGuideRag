@@ -1,8 +1,10 @@
 import streamlit as st
 import torch
 
-from medguiderag.config import EMBEDDING_MODEL_CANDIDATES
+from medguiderag.config import EMBEDDING_MODEL_CANDIDATES, GENERATOR_MODELS
 from medguiderag.generation.generator import generate_answer
+from medguiderag.generation.grounding import GroundingChecker, highlight
+from medguiderag.ingest.load_chunks import load_chunks
 from medguiderag.retrieval.hybrid import HybridRetriever
 from medguiderag.retrieval.retriever import Retriever
 
@@ -19,6 +21,11 @@ def get_retriever(model_name: str, hybrid: bool) -> Retriever | HybridRetriever:
     return HybridRetriever(model_name) if hybrid else Retriever(model_name)
 
 
+@st.cache_resource
+def get_checker() -> GroundingChecker:
+    return GroundingChecker([c["text"] for c in load_chunks()])
+
+
 with st.sidebar:
     embedding_model = st.selectbox("Модел за векторно представяне", EMBEDDING_MODEL_CANDIDATES)
     # The reranker takes ~1 s per question on the GPU but ~70 s on the CPU.
@@ -28,6 +35,7 @@ with st.sidebar:
         help="Кандидатите от векторното търсене и от BM25 се обединяват и се подреждат наново "
         "от модел за пренареждане; откъси с ниска оценка на релевантност се отхвърлят.",
     )
+    generator = st.selectbox("Генеративен модел", list(GENERATOR_MODELS), format_func=GENERATOR_MODELS.get)
     # ~1100 prompt tokens per chunk: more than 5 no longer fits the model's 8192 context with the answer.
     top_k = st.slider("Брой извлечени откъси (k)", min_value=1, max_value=5, value=5)
 
@@ -46,10 +54,15 @@ if question:
         st.stop()
 
     with st.spinner("Генериране на отговор..."):
-        answer = generate_answer(question, chunks)
+        answer = generate_answer(question, chunks, model=generator)
+
+    issues = get_checker().check(answer, chunks, question)
 
     st.subheader("Отговор")
-    st.write(answer)
+    st.markdown(highlight(answer, issues))
+    if issues:
+        details = ", ".join(dict.fromkeys(f"{i.text} ({i.reason})" for i in issues))
+        st.warning(f"Следните подробности от отговора не се срещат в показаните откъси и може да са неточни: {details}.")
     st.caption(
         "Отговорът е генериран от езиков модел въз основа на откъсите по-долу и може да съдържа "
         "неточности. Проверявайте информацията в посочените източници."

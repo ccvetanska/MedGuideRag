@@ -11,7 +11,13 @@ DATA_DIR = PROJECT_ROOT / "data"
 INDEX_DIR = DATA_DIR / "index"
 REPORTS_DIR = PROJECT_ROOT / "reports"
 
-OLLAMA_MODEL = "hf.co/INSAIT-Institute/BgGPT-Gemma-2-2.6B-IT-v1.0-GGUF:Q4_K_M"
+OLLAMA_MODEL = "hf.co/INSAIT-Institute/BgGPT-Gemma-3-4B-IT-GGUF:Q4_K_M"
+
+# Generators selectable in the UI, default first; labels are what the sidebar shows.
+GENERATOR_MODELS = {
+    OLLAMA_MODEL: "BgGPT 4B (Gemma 3)",
+    "hf.co/INSAIT-Institute/BgGPT-Gemma-2-2.6B-IT-v1.0-GGUF:Q4_K_M": "BgGPT 2.6B (Gemma 2)",
+}
 
 EMBEDDING_MODEL_CANDIDATES = [
     "BAAI/bge-m3",
