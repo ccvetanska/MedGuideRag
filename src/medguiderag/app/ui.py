@@ -1,3 +1,9 @@
+import os
+
+# All models are already on disk, but loading one from the Hugging Face cache still asks huggingface.co for
+# newer revisions. Must be set before huggingface_hub is imported; HF_HUB_OFFLINE=0 allows a first download.
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+
 import streamlit as st
 import torch
 
