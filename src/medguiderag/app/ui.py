@@ -4,12 +4,16 @@ import os
 # newer revisions. Must be set before huggingface_hub is imported; HF_HUB_OFFLINE=0 allows a first download.
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
+import html
+
 import streamlit as st
 import torch
 
 from medguiderag.config import EMBEDDING_MODEL_CANDIDATES, GENERATOR_MODELS
+from medguiderag.generation.attribution import Attributor, normalized_text
 from medguiderag.generation.generator import generate_answer
 from medguiderag.generation.grounding import GroundingChecker, highlight
+from medguiderag.indexing.embed import embed_texts
 from medguiderag.ingest.load_chunks import load_chunks
 from medguiderag.retrieval.hybrid import HybridRetriever
 from medguiderag.retrieval.retriever import Retriever
@@ -30,6 +34,21 @@ def get_retriever(model_name: str, hybrid: bool) -> Retriever | HybridRetriever:
 @st.cache_resource
 def get_checker() -> GroundingChecker:
     return GroundingChecker([c["text"] for c in load_chunks()])
+
+
+@st.cache_resource
+def get_attributor(model_name: str) -> Attributor:
+    # The retrieval model is already loaded, so matching sentences costs no extra memory.
+    return Attributor(lambda texts: embed_texts(texts, model_name, kind="query"))
+
+
+def marked(text: str, spans: list[tuple[int, int]]) -> str:
+    """Chunk text as HTML with the supporting sentences in <mark>; inside a <div> Streamlit leaves it unparsed as markdown."""
+    out, pos = [], 0
+    for start, end in spans:
+        out += [html.escape(text[pos:start]), f"<mark>{html.escape(text[start:end])}</mark>"]
+        pos = end
+    return f"<div>{''.join(out)}{html.escape(text[pos:])}</div>"
 
 
 with st.sidebar:
@@ -63,6 +82,7 @@ if question:
         answer = generate_answer(question, chunks, model=generator)
 
     issues = get_checker().check(answer, chunks, question)
+    attribution = get_attributor(embedding_model).attribute(answer, chunks)
 
     st.subheader("Отговор")
     st.markdown(highlight(answer, issues))
@@ -73,10 +93,17 @@ if question:
         "Отговорът е генериран от езиков модел въз основа на откъсите по-долу и може да съдържа "
         "неточности. Проверявайте информацията в посочените източници."
     )
+    if attribution.unsupported:
+        with st.expander(f"Изречения от отговора без открито съответствие в откъсите ({len(attribution.unsupported)})"):
+            for sentence in attribution.unsupported:
+                st.markdown(f"- {sentence}")
 
     st.subheader("Източници")
+    st.caption("Маркирани са изреченията от откъсите, с които са съпоставени изречения от отговора.")
     score_label = "релевантност" if hybrid else "прилика"
-    for c in chunks:
-        with st.expander(f"{c['document']} · стр. {c['page_start']}-{c['page_end']} · {score_label} {c['score']:.3f}"):
+    for i, c in enumerate(chunks):
+        spans = attribution.highlights.get(i, [])
+        usage = f"маркирани изречения: {len(spans)}" if spans else "не е използван в отговора"
+        with st.expander(f"{c['document']} · стр. {c['page_start']}-{c['page_end']} · {score_label} {c['score']:.3f} · {usage}"):
             st.caption(c["section"])
-            st.write(" ".join(c["text"].split()))
+            st.markdown(marked(normalized_text(c), spans), unsafe_allow_html=True)
