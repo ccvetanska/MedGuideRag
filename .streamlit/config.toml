@@ -1,0 +1,3 @@
+[theme]
+# 20% above Streamlit's default 16 px; all text and spacing scale with it.
+baseFontSize = 19

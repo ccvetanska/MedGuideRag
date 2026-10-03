@@ -1,0 +1,357 @@
+[
+ {
+  "set": "2.6B penalty 1.0",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA01",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.0",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA02",
+  "reason": "в откъсите не е свързан с Famotidine",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.0",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA02",
+  "reason": "в откъсите не е свързан с bromate",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.0",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BC05",
+  "reason": "в откъсите не е свързан с Ondansetron",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.0",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "наименование",
+  "text": "Bromodies",
+  "reason": "не се споменава в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.0",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "наименование",
+  "text": "Chlormizine",
+  "reason": "не се споменава в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.0",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "наименование",
+  "text": "Sodium",
+  "reason": "не се споменава в откъсите",
+  "real_error": false,
+  "note": "translation of \"натриев\" from the chunk"
+ },
+ {
+  "set": "2.6B penalty 1.05",
+  "question": "Какво включва блокът HR2 при лечението на остра лимфобластна левкемия при деца?",
+  "kind": "число",
+  "text": "13",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.05",
+  "question": "Какво включва блокът HR2 при лечението на остра лимфобластна левкемия при деца?",
+  "kind": "число",
+  "text": "19",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.05",
+  "question": "Какво включва блокът HR2 при лечението на остра лимфобластна левкемия при деца?",
+  "kind": "число",
+  "text": "31",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.05",
+  "question": "Как се подготвя пациент с диференциран карцином на щитовидната жлеза за лечение с радиоактивен йод?",
+  "kind": "наименование",
+  "text": "левотироксин",
+  "reason": "не се споменава в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.05",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA01",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.05",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA03",
+  "reason": "в откъсите не е свързан с Metoclopramide",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.05",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA04",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.05",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BC05",
+  "reason": "в откъсите не е свързан с Ondansetron",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.05",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "наименование",
+  "text": "Chlormizine",
+  "reason": "не се споменава в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.1",
+  "question": "Как се подготвя пациент с диференциран карцином на щитовидната жлеза за лечение с радиоактивен йод?",
+  "kind": "наименование",
+  "text": "левотироксин",
+  "reason": "не се споменава в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.2",
+  "question": "Как се предотвратява и лекува оралният мукозит при химиотерапия?",
+  "kind": "наименование",
+  "text": "парацетамол",
+  "reason": "не се споменава в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B penalty 1.2",
+  "question": "Как се лекува херпесният енцефалит?",
+  "kind": "число",
+  "text": "16 mg/kg",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA01",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA02",
+  "reason": "в откъсите не е свързан с Famotidine",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA02",
+  "reason": "в откъсите не е свързан с bromate",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BC05",
+  "reason": "в откъсите не е свързан с Ondansetron",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "наименование",
+  "text": "Bromodies",
+  "reason": "не се споменава в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "наименование",
+  "text": "Chlormizine",
+  "reason": "не се споменава в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "наименование",
+  "text": "Sodium",
+  "reason": "не се споменава в откъсите",
+  "real_error": false,
+  "note": "translation of \"натриев\" from the chunk"
+ },
+ {
+  "set": "2.6B loop check: repeat_penalty 1.2",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA19",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: repeat_penalty 1.2",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA34",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: repeat_penalty 1.2",
+  "question": "Как се лекува херпесният енцефалит?",
+  "kind": "число",
+  "text": "16 mg/kg",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: repeat_penalty 1.2",
+  "question": "Как се овладява екламптичен гърч?",
+  "kind": "ATC код",
+  "text": "N06AX34",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA01",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA02",
+  "reason": "в откъсите не е свързан с Famotidine",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA02",
+  "reason": "в откъсите не е свързан с bromate",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BC05",
+  "reason": "в откъсите не е свързан с Ondansetron",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "наименование",
+  "text": "Bromodies",
+  "reason": "не се споменава в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "наименование",
+  "text": "Chlormizine",
+  "reason": "не се споменава в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "наименование",
+  "text": "Sodium",
+  "reason": "не се споменава в откъсите",
+  "real_error": false,
+  "note": "translation of \"натриев\" from the chunk"
+ },
+ {
+  "set": "2.6B loop check: rp 1.15 + last_n 512",
+  "question": "Как се овладява екламптичен гърч?",
+  "kind": "ATC код",
+  "text": "J06AX01",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "4B (iteration 2)",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BA02",
+  "reason": "в откъсите не е свързан с Фамотидин",
+  "real_error": true
+ },
+ {
+  "set": "4B (iteration 2)",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A02BC05",
+  "reason": "в откъсите не е свързан с Ондансетрон",
+  "real_error": true
+ },
+ {
+  "set": "4B (iteration 2)",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "A03AA01",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "4B (iteration 2)",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "C01AA01",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "4B (iteration 2)",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "kind": "ATC код",
+  "text": "N02BE01",
+  "reason": "липсва в откъсите",
+  "real_error": true
+ },
+ {
+  "set": "4B (iteration 2)",
+  "question": "Как се овладява екламптичен гърч?",
+  "kind": "наименование",
+  "text": "метопролол",
+  "reason": "не се споменава в откъсите",
+  "real_error": true
+ }
+]

@@ -1,0 +1,310 @@
+[
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "generator": "2.6B",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "answer": "Хиперемезис гравидарум се лекува с комбинация от медикаменти, които включват:\n\n1. **Антихипермезивни средства**:\n   - **Ondansetron (Rec. INN)** (ATC: A02BC05)\n   - **Metoclopramide (Rec. INN)** (ATC: A02BA01)\n   - **Chlormizine (Rec. INN)** (ATC: A02BA01)\n   - **Promethazine (Rec. INN)** (ATC: A02BA01)\n   - **Trifluoperazine (Rec. INN)** (ATC: A02BA01)\n   - **N1-блокери**:\n     - **Promethazine** (ATC: A02BA01)\n\n2. **Антисекреторни средства**:\n   - **Esomeprazole (Rec. INN)** (ATC: A02BC05)\n   - **Famotidine (Rec. INN)** (ATC: A02BA02)\n   - **Ranitidine (Rec. INN)** (ATC: A02BA02)\n\n3. **Седативни средства**:\n   - **Bromodies**:\n     - **Sodium bromate (10%)** (ATC: A02BA02)\n\n4. **Антихипертензивни средства**:\n   - **Esomeprazole** (ATC: A02BC05)\n   - **Famotidine** (ATC: A02BA02)\n   - **Ranitidine** (ATC: A02BA02)\n\n5. **Антиацидни средства**:\n   - **Esomeprazole** (ATC: A02BC05)\n   - **Famotidine** (ATC: A02BA02)\n   - **Ranitidine** (ATC: A02BA02)\n\n6. **Антидиабетни средства**:\n   - **Esomeprazole** (ATC: A02BC05)\n   - **Famotidine** (ATC: A02BA02)\n   - **Ranitidine** (ATC: A02BA02)\n\n7. **Антиоксиданти**:\n   - **Esomeprazole** (ATC: A02BC05)\n   - **Famotidine** (ATC: A02BA02)\n   - **Ranitidine** (ATC: A02BA02)\n\n8. **Витамини и минерали**:\n   - **Esomeprazole** (ATC: A02BC05)\n   - **Famotidine** (ATC: A02BA02)\n   - **Ranitidine** (ATC: A02BA02)\n\n9. **Антихипертензивни средства**:\n   - **Esomeprazole** (ATC: A02BC05)\n   - **Famotidine** (ATC: A02BA02)\n   - **Ranitidine** (ATC: A02BA02)\n\n10. **Антихипертензивни средства**:\n    - **Esomeprazole** (ATC: A02BC05)\n    - **Famotidine** (ATC: A02BA02)\n    - **Ranitidine** (ATC: A02BA02)\n\n11. **Антихипертензивни средства**:\n    - **Esomeprazole** (ATC: A02BC05)\n    - **Famotidine** (ATC: A02BA02)\n    - **Ranitidine** (ATC: A02BA02)\n\n12. **Антихипертензивни средства**:\n    - **Esomeprazole** (ATC: A02BC05)\n    - **Famotidine** (ATC: A02BA02)\n    - **Ranitidine** (ATC: A02BA02)\n\n13. **Антихипертензивни средства**:\n    - **Esomeprazole** (ATC: A02BC05)\n    - **Famotidine** (ATC: A02BA02)\n    - **Ranitidine** (ATC: A02BA02)\n\n14. **Антихипертензивни средства**:\n    - **Esomeprazole** (ATC: A02BC05)\n    - **Famotidine** (ATC: A02BA02)\n    - **Ranitidine** (",
+  "chunk_ids": [
+   "ft-ginekologiq:000007"
+  ],
+  "tokens": 1024
+ },
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "generator": "2.6B",
+  "question": "Кога се прилага инсулин при захарен диабет тип 2?",
+  "answer": "Инсулин се прилага при захарен диабет тип 2, когато не може да се постигнат прицелните нива на кръвната захар с монотерапия или когато пациентът има изразена хипергликемия и/или клинични признаци на хипергликемия.",
+  "chunk_ids": [
+   "ФТР-Ендокринология:000042",
+   "ФТР-Ендокринология:000041",
+   "ФТР-Ендокринология:000036",
+   "ФТР-Ендокринология:000040",
+   "ФТР-Ендокринология:000037"
+  ],
+  "tokens": 68
+ },
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "generator": "2.6B",
+  "question": "Какво е лечението на атопичен дерматит?",
+  "answer": "Лечението на атопичен дерматит (АД) включва системни антибиотици при изолиран Staphylococcus aureus, антихистаминови средства, глюкокортикостероиди и азатиоприн при тежко протичащи форми.",
+  "chunk_ids": [
+   "Farmako_Derma1:000000",
+   "PharmTher_spravochnik_allergies:000001",
+   "PharmTher_spravochnik_allergies:000003",
+   "Farmako_Derma1:000002",
+   "PharmTher_spravochnik_allergies:000004"
+  ],
+  "tokens": 59
+ },
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "generator": "2.6B",
+  "question": "Как се лекува херпесният енцефалит?",
+  "answer": "Лечението на херпесния енцефалит включва симптоматично лечение с антивирусни лекарства като acyclovir, valacyclovir или famciclovir. Лечението трябва да започне още през първите дни и се прилага в дози от 30 mg/kg i.v. за 10-14 дни. При имунокомпрометирани пациенти се използва acyclovir в доза от 10 mg/kg i.v. за 14 дни. Използват се и други противовирусни лекарства като ganciclovir и foscarnet. Лечението трябва да се провежда под наблюдение на лекар.",
+  "chunk_ids": [
+   "farmakoterap_ruk-neurology__2018-1:000126",
+   "farmakoterap_ruk-neurology__2018-1:000128",
+   "farmakoterap_ruk-neurology__2018-1:000127",
+   "farmakoterap_ruk-neurology__2018-1:000124",
+   "farmakoterap_ruk-neurology__2018-1:000129"
+  ],
+  "tokens": 147
+ },
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "generator": "2.6B",
+  "question": "Как се овладява екламптичен гърч?",
+  "answer": "Екламптичен гърч се овладява чрез родоразрешение в спешен порядък. За овладяване на гърчовата симптоматика се използват венозна инфузия с магнезиев сулфат и диазепам.",
+  "chunk_ids": [
+   "ft-ginekologiq:000011",
+   "ft-ginekologiq:000010"
+  ],
+  "tokens": 62
+ },
+ {
+  "set": "2.6B loop check: current (greedy)",
+  "generator": "2.6B",
+  "question": "В каква доза се прилага кломифен цитрат за стимулиране на овулацията?",
+  "answer": "Кломифен цитрат се прилага в доза от 50 мг дневно за 5 дни, при липса на успех дозата се покачва на 100 мг дневно, а при необходимост и на 150 мг дневно.",
+  "chunk_ids": [
+   "ФТР-Ендокринология:000023",
+   "ft-ginekologiq:000055",
+   "ФТР-Ендокринология:000024",
+   "ft-ginekologiq:000047",
+   "ft-ginekologiq:000054"
+  ],
+  "tokens": 59
+ },
+ {
+  "set": "2.6B loop check: repeat_penalty 1.2",
+  "generator": "2.6B",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "answer": "Хиперемизс гравидарум (hyperemesis gravidarum) обикновено изисква незабавна хоспитализация и покой, като първоначалните грижи включват медикаменти за психично повлияване на пациентката, диетични препоръки и подкрепа. Лечението може да включва инфузионни терапии с глюкозни разтвори (10% или 5%) и левулозни разтвори, корекция на електролитния дисбаланс чрез добавяне на соли и микроелементи като витамин C, от групата B и други. Антиеметичните средства включват ondansetron, metoclopramide and Chlоrpromazine или promethazine (D2-рецепторни блокери), както и Н1-блокери като Promethazine. Антисекреторните средства могат да бъдат инхибитори на протонната помпа като Esomeprazole, H2-блокери като Famotidine or Ranitidine или М-холинолитици като Атропин за намаляване на хиперсаливацията и седативни средства.\n\nЛекарствените продукти включват esomeprazole (ATC: A02BC05), famotidine (ATC: A02BA19) and ranitidine (ATC: A02BA34). Оценката на ефективността е в зависимост от клиничното повлияване, запазването на бременността и общото състояние на жената.",
+  "chunk_ids": [
+   "ft-ginekologiq:000007"
+  ],
+  "tokens": 348
+ },
+ {
+  "set": "2.6B loop check: repeat_penalty 1.2",
+  "generator": "2.6B",
+  "question": "Кога се прилага инсулин при захарен диабет тип 2?",
+  "answer": "Инсулин се прилага при наличие на прояви на катаболизъм и кетонурия или когато кръвната захар е изразено висока (кръвна захар >17 mmol/l) и има признаци на хипергликемия.",
+  "chunk_ids": [
+   "ФТР-Ендокринология:000042",
+   "ФТР-Ендокринология:000041",
+   "ФТР-Ендокринология:000036",
+   "ФТР-Ендокринология:000040",
+   "ФТР-Ендокринология:000037"
+  ],
+  "tokens": 59
+ },
+ {
+  "set": "2.6B loop check: repeat_penalty 1.2",
+  "generator": "2.6B",
+  "question": "Какво е лечението на атопичен дерматит?",
+  "answer": "Лечението на атопичен дерматит (АД) включва системни антибиотици при изолиран Staphylococcus aureus и бета-лактамни антибиотици, ако има свръхчувствителност към тях. Антихистамините са полезни за облекчаване на сърбежа, а глюкокортикостероидите се използват при тежко протичащи форми на АД неповлияващ се от локална терапия.",
+  "chunk_ids": [
+   "Farmako_Derma1:000000",
+   "PharmTher_spravochnik_allergies:000001",
+   "PharmTher_spravochnik_allergies:000003",
+   "Farmako_Derma1:000002",
+   "PharmTher_spravochnik_allergies:000004"
+  ],
+  "tokens": 105
+ },
+ {
+  "set": "2.6B loop check: repeat_penalty 1.2",
+  "generator": "2.6B",
+  "question": "Как се лекува херпесният енцефалит?",
+  "answer": "Лечението на херпесния енцефалит включва симптоматично лечение с антивирусни лекарства като acyclovir (по 30 mg/kg дн. i.v.), valacyclovir (1g/дн.) или famciclovir (250 mg/дн.). При имунокомпрометирани пациенти се използва ganciclovir в доза от 8-16 mg/kg на всеки 8 часа, а при cytomegalovirus и herpes virus-6 - комбинация от ganciclovir и foscarnet. Лечението трябва да започне още през първите дни след инфекцията с acyclovir или valacyclovir в доза от 30 mg/kg дн., като се продължава поне 14 дни при възрастни, а за деца - минимум 21 дни.",
+  "chunk_ids": [
+   "farmakoterap_ruk-neurology__2018-1:000126",
+   "farmakoterap_ruk-neurology__2018-1:000128",
+   "farmakoterap_ruk-neurology__2018-1:000127",
+   "farmakoterap_ruk-neurology__2018-1:000124",
+   "farmakoterap_ruk-neurology__2018-1:000129"
+  ],
+  "tokens": 185
+ },
+ {
+  "set": "2.6B loop check: repeat_penalty 1.2",
+  "generator": "2.6B",
+  "question": "Как се овладява екламптичен гърч?",
+  "answer": "Екламптичен гърч може да бъде овладян чрез родоразрешение в спешен порядък и използване на венозна инфузия с магнезиев сулфат (ATC № A12CC02) за 4-6 грама през първите 3 часа, последвана от поддържаща инфузия от 2 г/час. В допълнение се използва диазепам бавно венозно за около 2 минути в началото и при нужда може да се повтори след интервал от 10-15 минути (ATC № N06AX34).",
+  "chunk_ids": [
+   "ft-ginekologiq:000011",
+   "ft-ginekologiq:000010"
+  ],
+  "tokens": 139
+ },
+ {
+  "set": "2.6B loop check: repeat_penalty 1.2",
+  "generator": "2.6B",
+  "question": "В каква доза се прилага кломифен цитрат за стимулиране на овулацията?",
+  "answer": "Кломифен цитрат обикновено се започва с 25-50 мг дневно за първите пет дни, а при липса на успех може да се увеличи дозата до 100 или дори 150 мг дневно. Това лечение цели стимулиране на овулацията и съответно забременяване.",
+  "chunk_ids": [
+   "ФТР-Ендокринология:000023",
+   "ft-ginekologiq:000055",
+   "ФТР-Ендокринология:000024",
+   "ft-ginekologiq:000047",
+   "ft-ginekologiq:000054"
+  ],
+  "tokens": 78
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "generator": "2.6B",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "answer": "Хиперемезис гравидарум се лекува с комбинация от медикаменти, които включват:\n\n1. **Антихипермезивни средства**:\n   - **Ondansetron (Rec. INN)** (ATC: A02BC05)\n   - **Metoclopramide (Rec. INN)** (ATC: A02BA01)\n   - **Chlormizine (Rec. INN)** (ATC: A02BA01)\n   - **Promethazine (Rec. INN)** (ATC: A02BA01)\n   - **Trifluoperazine (Rec. INN)** (ATC: A02BA01)\n   - **N1-блокери**:\n     - **Promethazine** (ATC: A02BA01)\n\n2. **Антисекреторни средства**:\n   - **Esomeprazole (Rec. INN)** (ATC: A02BC05)\n   - **Famotidine (Rec. INN)** (ATC: A02BA02)\n   - **Ranitidine (Rec. INN)** (ATC: A02BA02)\n\n3. **Седативни средства**:\n   - **Bromodies**:\n     - **Sodium bromate (10%)** (ATC: A02BA02)\n\n4. **Антихипертензивни средства**:\n   - **Esomeprazole** (ATC: A02BC05)\n   - **Famotidine** (ATC: A02BA02)\n   - **Ranitidine** (ATC: A02BA02)\n\n5. **Антиацидни средства**:\n   - **Esomeprazole** (ATC: A02BC05)\n   - **Famotidine** (ATC: A02BA02)\n   - **Ranitidine** (ATC: A02BA02)\n\n6. **Антидиарейни средства**:\n   - **Ondansetron** (ATC: A02BC05)\n   - **Metoclopramide** (ATC: A02BA01)\n   - **Chlormizine** (ATC: A02BA01)\n   - **Promethazine** (ATC: A02BA01)\n   - **Trifluoperazine** (ATC: A02BA01)\n\n7. **Антиконвулсанти**:\n   - **Atropine** (ATC: A02BA01)\n\n8. **Антихипертензивни средства**:\n   - **Esomeprazole** (ATC: A02BC05)\n   - **Famotidine** (ATC: A02BA02)\n   - **Ranitidine** (ATC: A02BA02)\n\n9. **Антиацидни средства**:\n   - **Esomeprazole** (ATC: A02BC05)\n   - **Famotidine** (ATC: A02BA02)\n   - **Ranitidine** (ATC: A02BA02)\n\n10. **Антидиарейни средства**:\n    - **Ondansetron** (ATC: A02BC05)\n    - **Metoclopramide** (ATC: A02BA01)\n    - **Chlormizine** (ATC: A02BA01)\n    - **Promethazine** (ATC: A02BA01)\n    - **Trifluoperazine** (ATC: A02BA01)\n\n11. **Антиконвулсанти**:\n    - **Atropine** (ATC: A02BA01)\n\n12. **Антихипертензивни средства**:\n    - **Esomeprazole** (ATC: A02BC05)\n    - **Famotidine** (ATC: A02BA02)\n    - **Ranitidine** (ATC: A02BA02)\n\n13. **Антиацидни средства**:\n    - **Esomeprazole** (ATC: A02BC05)\n    - **Famotidine** (ATC: A02BA02)\n    - **Ranitidine** (ATC: A02BA02)\n\n14. **Антидиарейни средства**:\n    - **Ondansetron** (ATC: A02BC05)\n    - **Metoclopramide** (ATC: A02BA01)\n    - **Chlormizine** (ATC: A",
+  "chunk_ids": [
+   "ft-ginekologiq:000007"
+  ],
+  "tokens": 1024
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "generator": "2.6B",
+  "question": "Кога се прилага инсулин при захарен диабет тип 2?",
+  "answer": "Инсулин се прилага при захарен диабет тип 2, когато не може да се постигнат и поддържат прицелните нива на HbA1c с монотерапия или когато има изразена хипергликемия и/или клинични признаци на хипергликемия.",
+  "chunk_ids": [
+   "ФТР-Ендокринология:000042",
+   "ФТР-Ендокринология:000041",
+   "ФТР-Ендокринология:000036",
+   "ФТР-Ендокринология:000040",
+   "ФТР-Ендокринология:000037"
+  ],
+  "tokens": 68
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "generator": "2.6B",
+  "question": "Какво е лечението на атопичен дерматит?",
+  "answer": "Лечението на атопичен дерматит (АД) включва системни антибиотици при изолиран Staphylococcus aureus, антихистаминови средства, глюкокортикостероиди и азатиоприн при тежко протичащи форми.",
+  "chunk_ids": [
+   "Farmako_Derma1:000000",
+   "PharmTher_spravochnik_allergies:000001",
+   "PharmTher_spravochnik_allergies:000003",
+   "Farmako_Derma1:000002",
+   "PharmTher_spravochnik_allergies:000004"
+  ],
+  "tokens": 59
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "generator": "2.6B",
+  "question": "Как се лекува херпесният енцефалит?",
+  "answer": "Лечението на херпесния енцефалит включва симптоматично лечение с антивирусни лекарства като acyclovir, valacyclovir, famciclovir, ganciclovir и foscarnet. Лечението трябва да започне още през първите дни и се прилага в дози от 30 mg/kg i.v. за 10-14 дни, а при имунокомпрометирани пациенти се използва acyclovir в доза от 10 mg/kg i.v. за 10 дни. Кортикостероидите се прилагат с цел намаляване на мозъчния оток, но тяхната ефективност е спорна.",
+  "chunk_ids": [
+   "farmakoterap_ruk-neurology__2018-1:000126",
+   "farmakoterap_ruk-neurology__2018-1:000128",
+   "farmakoterap_ruk-neurology__2018-1:000127",
+   "farmakoterap_ruk-neurology__2018-1:000124",
+   "farmakoterap_ruk-neurology__2018-1:000129"
+  ],
+  "tokens": 154
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "generator": "2.6B",
+  "question": "Как се овладява екламптичен гърч?",
+  "answer": "Екламптичен гърч се овладява чрез родоразрешение в спешен порядък. За овладяване на гърчовата симптоматика се използват венозна инфузия с магнезиев сулфат и диазепам.",
+  "chunk_ids": [
+   "ft-ginekologiq:000011",
+   "ft-ginekologiq:000010"
+  ],
+  "tokens": 62
+ },
+ {
+  "set": "2.6B loop check: repeat_last_n 512",
+  "generator": "2.6B",
+  "question": "В каква доза се прилага кломифен цитрат за стимулиране на овулацията?",
+  "answer": "Кломифен цитрат се прилага в доза от 50 мг дневно за 5 дни, при липса на успех дозата се покачва на 100 мг дневно, а при необходимост и на 150 мг дневно.",
+  "chunk_ids": [
+   "ФТР-Ендокринология:000023",
+   "ft-ginekologiq:000055",
+   "ФТР-Ендокринология:000024",
+   "ft-ginekologiq:000047",
+   "ft-ginekologiq:000054"
+  ],
+  "tokens": 59
+ },
+ {
+  "set": "2.6B loop check: rp 1.15 + last_n 512",
+  "generator": "2.6B",
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "answer": "Хиперемезис гравидарум обикновено изисква незабавна хоспитализация и покой. Първоначалните грижи включват медикаменти насочени към психично повлияване на пациентката, диетични препоръки и подкрепа. Случаите с hyperemesis gravidarum изискват общо успокояващи медикаменти, витамини, соли и микроелементи. Диетата трябва да бъде богата на калории и протеини, а приемът на течности ограничен до минимално количество. Прилагат се също така антиеметични средства като promethazine или chlorpromazine, както и антисекреторни лекарства като famotidine или ranitidine. В някои случаи може да се използват и други медикаменти според индивидуалния случай. Важно е лечението да бъде строго контролирано от медицински специалисти, тъй като прекомерното приемане на хранителни вещества може да доведе до токсичност. Прекъсването на бременността - сега се извършва изключително рядко по медицински индикации заради неовладящ се хиперемезис. Терапията продължава през цялата бременност, но при нужда могат да бъдат предприети корекции след консултация със специалист.",
+  "chunk_ids": [
+   "ft-ginekologiq:000007"
+  ],
+  "tokens": 301
+ },
+ {
+  "set": "2.6B loop check: rp 1.15 + last_n 512",
+  "generator": "2.6B",
+  "question": "Кога се прилага инсулин при захарен диабет тип 2?",
+  "answer": "Инсулин се прилага при наличие на признаци на катаболизъм и кетонурия или когато клиничните признаци на хипергликемия са изразени (кръвна захар > 17 mmol/l или HbA1c ≥ 10.0–12.0%).",
+  "chunk_ids": [
+   "ФТР-Ендокринология:000042",
+   "ФТР-Ендокринология:000041",
+   "ФТР-Ендокринология:000036",
+   "ФТР-Ендокринология:000040",
+   "ФТР-Ендокринология:000037"
+  ],
+  "tokens": 68
+ },
+ {
+  "set": "2.6B loop check: rp 1.15 + last_n 512",
+  "generator": "2.6B",
+  "question": "Какво е лечението на атопичен дерматит?",
+  "answer": "Лечението на атопичен дерматит включва използването на глюкокортикостероиди, когато е необходимо, както и системни антибиотици при наличие на Staphylococcus aureus или пиодермия. Системните антихистаминови средства също могат да помогнат за облекчаване на симптомите, особено ако става дума за суха кожа и нарушена епидермална бариера.",
+  "chunk_ids": [
+   "Farmako_Derma1:000000",
+   "PharmTher_spravochnik_allergies:000001",
+   "PharmTher_spravochnik_allergies:000003",
+   "Farmako_Derma1:000002",
+   "PharmTher_spravochnik_allergies:000004"
+  ],
+  "tokens": 94
+ },
+ {
+  "set": "2.6B loop check: rp 1.15 + last_n 512",
+  "generator": "2.6B",
+  "question": "Как се лекува херпесният енцефалит?",
+  "answer": "Лечението на херпесния енцефалит обикновено започва още през първите дни с Acyclovir в доза от 30 mg/kg дн., i.v., продължаваща 10-14 дни за възрастни или по-слаба доза за деца. Използват се и други противовирусни лекарства като Valacyclovir, Famciclovir и Ganciclovir. Лечението трябва да бъде под наблюдение на лекар специалист.",
+  "chunk_ids": [
+   "farmakoterap_ruk-neurology__2018-1:000126",
+   "farmakoterap_ruk-neurology__2018-1:000128",
+   "farmakoterap_ruk-neurology__2018-1:000127",
+   "farmakoterap_ruk-neurology__2018-1:000124",
+   "farmakoterap_ruk-neurology__2018-1:000129"
+  ],
+  "tokens": 110
+ },
+ {
+  "set": "2.6B loop check: rp 1.15 + last_n 512",
+  "generator": "2.6B",
+  "question": "Как се овладява екламптичен гърч?",
+  "answer": "Екламптичен гърч се овладява чрез родоразрешение в спешен порядък. За овладяване на гърчовата симптоматика се използват венозна инфузия с магнезиев сулфат (ATC № A12CC02) и диазепам (ATC № J06AX01).",
+  "chunk_ids": [
+   "ft-ginekologiq:000011",
+   "ft-ginekologiq:000010"
+  ],
+  "tokens": 81
+ },
+ {
+  "set": "2.6B loop check: rp 1.15 + last_n 512",
+  "generator": "2.6B",
+  "question": "В каква доза се прилага кломифен цитрат за стимулиране на овулацията?",
+  "answer": "Кломифен цитрат се прилага в дозировка от 50 мг дневно през първите пет дни от менструалния цикъл при жени със синдром на поликистозните яйчници (СПКЯ), който води до ановулация и хиперандрогенизъм.",
+  "chunk_ids": [
+   "ФТР-Ендокринология:000023",
+   "ft-ginekologiq:000055",
+   "ФТР-Ендокринология:000024",
+   "ft-ginekologiq:000047",
+   "ft-ginekologiq:000054"
+  ],
+  "tokens": 69
+ }
+]

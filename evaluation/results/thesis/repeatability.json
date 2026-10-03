@@ -1,0 +1,48 @@
+{
+ "generator": "2.6B",
+ "note": "distinct answers among 3 back-to-back and 3 interleaved calls with the same prompt",
+ "results": [
+  {
+   "setting": "greedy",
+   "question": "кломифен",
+   "back_to_back": 2,
+   "interleaved": 1,
+   "all_six": 2
+  },
+  {
+   "setting": "greedy",
+   "question": "екламптичен гърч",
+   "back_to_back": 1,
+   "interleaved": 1,
+   "all_six": 1
+  },
+  {
+   "setting": "penalty 1.2",
+   "question": "кломифен",
+   "back_to_back": 1,
+   "interleaved": 2,
+   "all_six": 2
+  },
+  {
+   "setting": "penalty 1.2",
+   "question": "екламптичен гърч",
+   "back_to_back": 2,
+   "interleaved": 1,
+   "all_six": 2
+  },
+  {
+   "setting": "penalty 1.2 + seed 42",
+   "question": "кломифен",
+   "back_to_back": 1,
+   "interleaved": 2,
+   "all_six": 2
+  },
+  {
+   "setting": "penalty 1.2 + seed 42",
+   "question": "екламптичен гърч",
+   "back_to_back": 2,
+   "interleaved": 1,
+   "all_six": 2
+  }
+ ]
+}

@@ -1,0 +1,146 @@
+[
+ {
+  "question": "Кога трябва да се изследва серумният натрий при пациенти, които приемат дезмопресин?",
+  "chunk_id": "FTR-urologichni_zaboliavania:000026",
+  "document": "FTR-urologichni_zaboliavania.pdf",
+  "pages": "29-33"
+ },
+ {
+  "question": "При каква стойност на холестерола се започва лечение със статин при пациенти на терапия с тирозинкиназни инхибитори?",
+  "chunk_id": "FTR_Hematology_2018_250418__JT_29.05.2018-J51:000074",
+  "document": "FTR_Hematology_2018_250418__JT_29.05.2018-J51.pdf",
+  "pages": "95-97"
+ },
+ {
+  "question": "Кога острата миелоидна левкемия се определя като първично рефрактерна?",
+  "chunk_id": "FTR_Hematology_2018_250418__JT_29.05.2018-J51:000122",
+  "document": "FTR_Hematology_2018_250418__JT_29.05.2018-J51.pdf",
+  "pages": "159-161"
+ },
+ {
+  "question": "Кои цитостатици се използват за имуносупресия при гломерулни заболявания?",
+  "chunk_id": "FTR_Nefrologia:000003",
+  "document": "FTR_Nefrologia.pdf",
+  "pages": "9-10"
+ },
+ {
+  "question": "Какво включва блокът HR2 при лечението на остра лимфобластна левкемия при деца?",
+  "chunk_id": "FTR_himeoterapia_i_onkohematologia_pri_deca_BZ_final:000005",
+  "document": "FTR_himeoterapia_i_onkohematologia_pri_deca_BZ_final.pdf",
+  "pages": "7-9"
+ },
+ {
+  "question": "Кои лекарства са първи избор при когнитивни нарушения при деменция?",
+  "chunk_id": "FTR_psihichni_zaboliavania:000038",
+  "document": "FTR_psihichni_zaboliavania.pdf",
+  "pages": "58-59"
+ },
+ {
+  "question": "Какъв е препоръчителният режим на лечение на ранен придобит сифилис?",
+  "chunk_id": "Farmako_Derma1:000030",
+  "document": "Farmako_Derma1.pdf",
+  "pages": "42-43"
+ },
+ {
+  "question": "Колко често се проследява бъбречната функция при пациенти с хепатит B, лекувани с нуклеозидни аналози?",
+  "chunk_id": "Hepatiti_B_C_-_нов_13.12.2018-1:000005",
+  "document": "Hepatiti_B_C_-_нов_13.12.2018-1.pdf",
+  "pages": "6-7"
+ },
+ {
+  "question": "Кога улцерозният колит се приема за рефрактерен на имуномодулатори?",
+  "chunk_id": "IBD_new_13.12.2018:000014",
+  "document": "IBD_new_13.12.2018.pdf",
+  "pages": "19-20"
+ },
+ {
+  "question": "Как се предотвратява и лекува оралният мукозит при химиотерапия?",
+  "chunk_id": "PharmTher-onkologia_2018_dopaln._293_pr._23.08.2018__version-J21:000081",
+  "document": "PharmTher-onkologia_2018_dopaln._293_pr._23.08.2018__version-J21.pdf",
+  "pages": "101-102"
+ },
+ {
+  "question": "Каква неоадювантна терапия се прилага при HER2-позитивен карцином на млечната жлеза?",
+  "chunk_id": "PharmTher-onkologia_2018_dopaln._293_pr._23.08.2018__version-J21:000012",
+  "document": "PharmTher-onkologia_2018_dopaln._293_pr._23.08.2018__version-J21.pdf",
+  "pages": "17-18"
+ },
+ {
+  "question": "Кои биологични лекарства се прилагат при тежка астма, която не се контролира със стандартна терапия?",
+  "chunk_id": "PharmTher_spravochnik_allergies:000007",
+  "document": "PharmTher_spravochnik_allergies.pdf",
+  "pages": "12-14"
+ },
+ {
+  "question": "Как се лекува херпесният енцефалит?",
+  "chunk_id": "farmakoterap_ruk-neurology__2018-1:000128",
+  "document": "farmakoterap_ruk-neurology__2018-1.pdf",
+  "pages": "162-163"
+ },
+ {
+  "question": "Препоръчва ли се ацетилсалицилова киселина за първична профилактика на мозъчен инсулт?",
+  "chunk_id": "farmakoterap_ruk-neurology__2018-1:000037",
+  "document": "farmakoterap_ruk-neurology__2018-1.pdf",
+  "pages": "47-48"
+ },
+ {
+  "question": "Как се овладява екламптичен гърч?",
+  "chunk_id": "ft-ginekologiq:000011",
+  "document": "ft-ginekologiq.pdf",
+  "pages": "17-19"
+ },
+ {
+  "question": "Как се лекува бронхопулмонална дисплазия, усложнена с белодробна хипертония, при новородени?",
+  "chunk_id": "neonatologia_13.12.2018:000012",
+  "document": "neonatologia_13.12.2018.pdf",
+  "pages": "18-19"
+ },
+ {
+  "question": "Кога е противопоказано лечението с пегилиран интерферон и рибавирин при хепатит C?",
+  "chunk_id": "ФТР-Гастроентерологични заболявания:000079",
+  "document": "ФТР-Гастроентерологични заболявания.pdf",
+  "pages": "119-121"
+ },
+ {
+  "question": "Кога е показано хирургично лечение на гастроезофагеална рефлуксна болест?",
+  "chunk_id": "ФТР-Гастроентерологични заболявания:000010",
+  "document": "ФТР-Гастроентерологични заболявания.pdf",
+  "pages": "16-18"
+ },
+ {
+  "question": "В каква доза се прилага кломифен цитрат за стимулиране на овулацията?",
+  "chunk_id": "ФТР-Ендокринология:000023",
+  "document": "ФТР-Ендокринология.pdf",
+  "pages": "34-36"
+ },
+ {
+  "question": "Как се подготвя пациент с диференциран карцином на щитовидната жлеза за лечение с радиоактивен йод?",
+  "chunk_id": "PharmTher-Nuclear_medicine-25.01.2018:000001",
+  "document": "PharmTher-Nuclear_medicine-25.01.2018.pdf",
+  "pages": "3-3"
+ },
+ {
+  "question": "Какви антибиотични капки се използват при бактериален конюнктивит?",
+  "chunk_id": "ФТР-Очни_Болести:000001",
+  "document": "ФТР-Очни_Болести.pdf",
+  "pages": "4-6"
+ },
+ {
+  "question": "Как се лекува хиперемезис гравидарум?",
+  "chunk_id": "ft-ginekologiq:000007",
+  "document": "ft-ginekologiq.pdf",
+  "pages": "12-13"
+ },
+ {
+  "question": "Кога се прилага инсулин при захарен диабет тип 2?",
+  "chunk_id": "ФТР-Ендокринология:000042",
+  "document": "ФТР-Ендокринология.pdf",
+  "pages": "63-64"
+ },
+ {
+  "question": "Какво е лечението на атопичен дерматит?",
+  "chunk_id": "Farmako_Derma1:000000",
+  "document": "Farmako_Derma1.pdf",
+  "pages": "1-3"
+ }
+]

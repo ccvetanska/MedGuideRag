@@ -22,3 +22,7 @@ docs/*.pdf
 
 # Python packaging
 *.egg-info/
+
+# Evaluation: outputs of new runs; the archive behind the thesis numbers stays tracked
+evaluation/results/*
+!evaluation/results/thesis/
