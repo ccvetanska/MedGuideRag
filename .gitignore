@@ -19,7 +19,6 @@ docs/*.bbl
 docs/*.blg
 docs/*.bcf
 docs/*.run.xml
-docs/*.pdf
 
 # Python packaging
 *.egg-info/
