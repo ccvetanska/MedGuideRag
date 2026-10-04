@@ -1,13 +1,11 @@
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-WORKSPACE_ROOT = PROJECT_ROOT.parent
-
-PDP_DATA_DIR = WORKSPACE_ROOT / "Pdp" / "data" / "processed"
-CHUNKS_PATH = PDP_DATA_DIR / "chunks.jsonl"
-DOCUMENTS_PATH = PDP_DATA_DIR / "documents.jsonl"
 
 DATA_DIR = PROJECT_ROOT / "data"
+CORPUS_DIR = DATA_DIR / "processed"
+CHUNKS_PATH = CORPUS_DIR / "chunks.jsonl"
+DOCUMENTS_PATH = CORPUS_DIR / "documents.jsonl"
 INDEX_DIR = DATA_DIR / "index"
 REPORTS_DIR = PROJECT_ROOT / "reports"
 
