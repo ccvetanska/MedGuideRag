@@ -1,4 +1,4 @@
-"""How much of each chunk the embedding models see within their maximum input length (thesis table on truncation).
+"""How much of each chunk the embedding models see within their maximum input length (thesis table tab:truncation).
 
     python -m evaluation.input_coverage
 

@@ -2,13 +2,15 @@ import ollama
 
 from medguiderag.config import OLLAMA_MODEL
 
-# After the context since Gemma 2 has no system role; no citation request, as the 2.6B model fabricates sources.
+# After the context since Gemma 2 and Gemma 3 have no system role; no citation request, as BgGPT fabricated
+# sources when asked to cite.
 INSTRUCTIONS = (
     "Отговори на въпроса само с информация от горните откъси от национални "
     "фармакотерапевтични ръководства. Не добавяй факти, които не са в откъсите."
 )
 
-# 8192 is Gemma 2's native window (Ollama's default 4096 truncates even 5 chunks); temperature 0 keeps answers repeatable.
+# 8192 holds five chunks and the answer (Ollama's default 4096 truncates even 5 chunks); temperature 0 keeps
+# answers nearly repeatable (the GPU may still give two variants).
 # Greedy decoding looped on a single drug-list chunk (the same 4 lines until the context filled, ~2 min);
 # repeat_penalty 1.2 stopped it without losing facts. num_predict bounds the time if a loop still happens.
 GENERATION_OPTIONS = {"num_ctx": 8192, "temperature": 0, "repeat_penalty": 1.2, "num_predict": 1024}
@@ -16,7 +18,7 @@ GENERATION_OPTIONS = {"num_ctx": 8192, "temperature": 0, "repeat_penalty": 1.2, 
 
 def _format_context(chunks: list[dict]) -> str:
     parts = []
-    # Most relevant chunk last, next to the question: the 2.6B model ignores context ~5000 tokens back.
+    # Most relevant chunk last, next to the question: BgGPT 2.6B ignored context ~5000 tokens back.
     for c in reversed(chunks):
         source = f"{c['document']}, стр. {c['page_start']}-{c['page_end']}"
         # PDF line breaks arrive as "\n\n" between single words of justified lines.
