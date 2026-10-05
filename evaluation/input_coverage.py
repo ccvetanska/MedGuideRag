@@ -19,12 +19,17 @@ MAX_INPUT = {"BAAI/bge-m3": 8192, "intfloat/multilingual-e5-base": 512,
 TARGET = next(c for c in CHUNKS if c["chunk_id"] == "ft-ginekologiq:000007")
 
 
+def load_tokenizer(name: str) -> Tokenizer:
+    path = glob.glob(os.path.join(HUB, "models--" + name.replace("/", "--"), "snapshots", "*", "tokenizer.json"))[0]
+    tokenizer = Tokenizer.from_file(path)
+    tokenizer.no_truncation()
+    return tokenizer
+
+
 def main():
     char_pos = TARGET["text"].lower().find("hyperemesis")
     for name, limit in MAX_INPUT.items():
-        path = glob.glob(os.path.join(HUB, "models--" + name.replace("/", "--"), "snapshots", "*", "tokenizer.json"))[0]
-        tokenizer = Tokenizer.from_file(path)
-        tokenizer.no_truncation()
+        tokenizer = load_tokenizer(name)
         prefix = "passage: " if "e5" in name else ""
         lengths = [len(tokenizer.encode(prefix + c["text"]).ids) for c in CHUNKS]
         truncated = sum(n > limit for n in lengths)
