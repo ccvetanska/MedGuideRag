@@ -26,3 +26,5 @@ EMBEDDING_MODEL_CANDIDATES = [
 RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
 RERANK_CANDIDATES = 20
 RERANK_MIN_SCORE = 0.1
+# Key-concept check: a question word is specific when its stem occurs in at most this many chunks (~2%).
+COVERAGE_MAX_CHUNKS = 30

@@ -1,9 +1,4 @@
 numpy>=1.26
-pandas>=2.2
-tqdm>=4.66
-pydantic>=2.7
-python-dotenv>=1.0
-jupyterlab>=4.2
 
 # Embeddings: multilingual sentence-transformers models, compared empirically
 # (BAAI/bge-m3, intfloat/multilingual-e5-base, paraphrase-multilingual-mpnet-base-v2).

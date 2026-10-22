@@ -37,6 +37,8 @@ COMPARISONS = [("bge-m3", "e5-base"), ("bge-m3", "mpnet"), ("bge-m3", "BM25"), (
                ("RRF", "RRF + reranker"), ("bge-m3", "RRF + reranker")]
 
 ANSWER_VERDICTS = {"complete", "partial", "wrong"}
+# Only for "wrong": the error is in what the question asks (core) or in a side detail of a correct answer (minor).
+ERROR_SEVERITIES = {"core", "minor"}
 OUT_OF_SCOPE_VERDICTS = {"declined", "fabricated"}
 LINK_VERDICTS = {"correct", "wrong", "unclear"}
 UNMATCHED_VERDICTS = {"unsupported", "missed_match", "unclear"}
@@ -295,13 +297,31 @@ def retrieve(rows: list[dict]):
         print(f"ranked with {label}", flush=True)
 
 
+def _refused(row: dict) -> bool:
+    """No answer: no chunk passed the reranker threshold, or the key-concept check stopped the question."""
+    return not row["chunk_ids"] or not row.get("coverage", {}).get("answerable", True)
+
+
+def check_coverage(rows: list[dict]):
+    """The app's key-concept check (generation/coverage.py) on the retrieved chunks, before generation."""
+    from medguiderag.generation.coverage import CoverageChecker
+
+    checker = CoverageChecker([c["text"] for c in CHUNKS])
+    for row in rows:
+        if row["chunk_ids"]:
+            c = checker.check(row["question"], chunks_by_id(row["chunk_ids"]))
+            row["coverage"] = {"answerable": c.answerable, "reason": c.reason, "terms": list(c.terms)}
+            if not c.answerable:
+                print(f"{row['id']} stopped by the key-concept check ({c.reason}: {', '.join(c.terms)})", flush=True)
+
+
 def generate(rows: list[dict]):
     import ollama
 
     from medguiderag.config import OLLAMA_MODEL
     from medguiderag.generation.generator import generate_answer
 
-    answered = [r for r in rows if r["chunk_ids"]]
+    answered = [r for r in rows if not _refused(r)]
     for n, row in enumerate(answered):
         if n and n % UNLOAD_EVERY == 0:
             ollama.generate(model=OLLAMA_MODEL, keep_alive=0)
@@ -344,6 +364,9 @@ def _answer_lines(answer: str | None) -> list[str] | None:
 LABELS_GUIDE = {
     "answer_verdict": "complete (верен и пълен) | partial (верен, но непълен) | wrong (съдържа невярно твърдение); "
                       "за O-въпросите: declined (казва, че няма информация) | fabricated (отговаря без опора)",
+    "error_severity": "само при wrong: core (грешката е в това, което въпросът пита: лекарство, доза, показание, "
+                      "популация, продължителност) | minor (основният отговор е верен, грешката е в странична "
+                      "подробност); иначе null",
     "present, real_error": "true | false",
     "missed_errors": "неподкрепени подробности от отговора, които проверката не е отбелязала, напр. [\"8-16 mg/kg\"]",
     "links.verdict": "correct | wrong | unclear (по желание)",
@@ -355,10 +378,12 @@ LABELS_GUIDE = {
 def labels_template(rows: list[dict]) -> dict:
     labels = {"_възможни_стойности": LABELS_GUIDE}
     for row in rows:
-        refused = not row["chunk_ids"]
+        refused = _refused(row)
         entry = {"question": row["question"], "answer": _answer_lines(row.get("answer"))}
         if row["id"].startswith("F"):
             entry["answer_verdict"] = "refused" if refused else None
+            if not refused:
+                entry["error_severity"] = None
             entry["facts"] = [{"fact": f, "present": False if refused else None} for f in row["facts"]]
         else:
             entry["refused"] = refused
@@ -425,6 +450,10 @@ def review_markdown(rows: list[dict]) -> str:
             out += ["няма: системата отказва да отговори "
                     f"(най-висока оценка {row['rerank_scores'][0]:.3f}, праг 0.1)", ""]
             continue
+        if _refused(row):
+            out += ["", "**Отказ от проверката на ключовите понятия** "
+                    f"({row['coverage']['reason']}: {', '.join(row['coverage']['terms'])}); отговор не е генериран.", ""]
+            continue
         out += ["", "**Отговор:**", ""]
         out += ["> " + line for line in _marked(row["answer"], row["grounding_spans"]).splitlines() if line.strip()]
         out.append("")
@@ -462,6 +491,7 @@ def run(args):
     rows += [dict(item) for item in questions["out_of_scope"]]
     start = time.perf_counter()
     retrieve(rows)
+    check_coverage(rows)
     generate(rows)
     check_answers(rows)
 
@@ -485,6 +515,8 @@ def _unlabelled(labels: dict) -> list[str]:
         missing = []
         if "answer_verdict" in e and e["answer_verdict"] not in allowed:
             missing.append(f"answer_verdict ({' | '.join(sorted(allowed - {'refused'}))})")
+        if e.get("answer_verdict") == "wrong" and e.get("error_severity") not in ERROR_SEVERITIES:
+            missing.append(f"error_severity ({' | '.join(sorted(ERROR_SEVERITIES))})")
         facts = sum(not isinstance(f["present"], bool) for f in e.get("facts", []))
         flags = sum(not isinstance(f["real_error"], bool) for f in e.get("flags", []))
         missing += [f"present при {facts} факта"] if facts else []
@@ -513,15 +545,25 @@ def _share(n: int, total: int) -> str:
 def report(args):
     out_dir = Path(args.out_dir)
     rows = json.load(open(out_dir / ANSWERS_NAME, encoding="utf-8"))
+    # Gold chunks from the current question file, so a passage accepted as correct after reviewing the shown
+    # chunks (also_correct) counts without generating the answers again.
+    _, _, gold_of = inspect(load_questions(Path(args.questions)))
+    changed = [r["id"] for r in rows if r["id"] in gold_of and set(gold_of[r["id"]]) != set(r.get("gold", []))]
+    for r in rows:
+        r["gold"] = gold_of.get(r["id"], r.get("gold", []))
+    if changed:
+        print(f"Верните откъси са взети от {Path(args.questions).name}; променени спрямо пускането: {', '.join(changed)}\n")
     try:
         labels = json.load(open(out_dir / LABELS_NAME, encoding="utf-8"))
     except json.JSONDecodeError as e:
         sys.exit(f"{LABELS_NAME}: грешка в JSON на ред {e.lineno}, позиция {e.colno}: {e.msg}.")
     labels = {k: v for k, v in labels.items() if not k.startswith("_")}
     missing = _unlabelled(labels)
+    # Retrieval, refusals and timings need no verdicts; the answer-quality parts wait until all are filled in.
+    labelled = not missing
     if missing:
-        print("Липсващи или неразпознати присъди:\n  " + "\n  ".join(missing))
-        sys.exit(f"\nНе са готови {len(missing)} въпроса; попълнете {out_dir / LABELS_NAME}.")
+        print(f"Ръчните присъди не са готови за {len(missing)} въпроса (виж {LABELS_NAME}); "
+              "отчитат се само автоматичните части.\n")
     in_scope = [r for r in rows if r["id"].startswith("F")]
     out_scope = [r for r in rows if r["id"].startswith("O")]
     result = {"questions": {"in_scope": len(in_scope), "out_of_scope": len(out_scope)}}
@@ -561,23 +603,62 @@ def report(args):
     print(f"\nОткъсът с отговора е показан на модела: {_share(shown, len(in_scope))}")
     result["gold_shown"] = shown
 
-    false_refusals = sum(not r["chunk_ids"] for r in in_scope)
-    refused_out = sum(not r["chunk_ids"] for r in out_scope)
+    false_refusals = sum(_refused(r) for r in in_scope)
+    refused_out = sum(_refused(r) for r in out_scope)
+    by_threshold = sum(not r["chunk_ids"] for r in out_scope)
     print(f"\nОткази: погрешни при въпросите в обхвата {false_refusals}/{len(in_scope)}, "
-          f"правилни при въпросите извън обхвата {refused_out}/{len(out_scope)}")
+          f"правилни при въпросите извън обхвата {refused_out}/{len(out_scope)} "
+          f"(праг {by_threshold}, проверка на ключовите понятия {refused_out - by_threshold})")
+
+    def how(r):
+        if not r["chunk_ids"]:
+            return "отказ (праг)"
+        if _refused(r):
+            return f"отказ ({r['coverage']['reason']}: {', '.join(r['coverage']['terms'])})"
+        return labels[r["id"]].get("answer_verdict") or "unlabelled"
+
+    out_verdicts = {r["id"]: how(r) for r in out_scope}
     for r in out_scope:
-        verdict = "отказ" if not r["chunk_ids"] else labels[r["id"]]["answer_verdict"]
-        print(f"  {r['id']} ({r['kind']}): най-висока оценка {r['rerank_scores'][0]:.3f} -> {verdict}")
+        print(f"  {r['id']} ({r['kind']}): най-висока оценка {r['rerank_scores'][0]:.3f} -> {out_verdicts[r['id']]}")
+    for r in in_scope:
+        if _refused(r):
+            print(f"  погрешен отказ {r['id']}: {how(r)}, най-висока оценка {r['rerank_scores'][0]:.3f}")
     result["refusals"] = {"false_in_scope": false_refusals, "correct_out_of_scope": refused_out,
-                          "out_of_scope": {r["id"]: labels[r["id"]].get("answer_verdict", "refused") for r in out_scope}}
+                          "out_of_scope_by_threshold": by_threshold, "out_of_scope": out_verdicts,
+                          "top_scores": {r["id"]: r["rerank_scores"][0] for r in rows}}
+
+    answered_rows = [r for r in rows if r.get("answer") is not None]
+    flagged = [r for r in answered_rows if r["grounding_issues"]]
+    print(f"\nПроверка за неподкрепени подробности: сигнали в {len(flagged)} от {len(answered_rows)} отговора, "
+          f"общо {sum(len(r['grounding_issues']) for r in answered_rows)}")
+    result["grounding_auto"] = {"answers": len(answered_rows), "flagged_answers": len(flagged),
+                                "flags": sum(len(r["grounding_issues"]) for r in answered_rows)}
+    loops = sum(r["answer"].endswith("[…]") for r in answered_rows)
+    print(f"Прекъснати отговори (зацикляне): {loops}")
+    result["cut_answers"] = loops
+    if not labelled:
+        _report_links_and_time(rows, in_scope, labels, result, labelled)
+        _save_report(args, result)
+        return
 
     verdicts = [labels[r["id"]]["answer_verdict"] for r in in_scope]
     counts = {v: verdicts.count(v) for v in ("complete", "partial", "wrong", "refused")}
+    severities = [labels[r["id"]]["error_severity"] for r in in_scope if labels[r["id"]]["answer_verdict"] == "wrong"]
+    core, minor = severities.count("core"), severities.count("minor")
+    answered_in = len(in_scope) - counts["refused"]
     facts = [f["present"] for r in in_scope for f in labels[r["id"]]["facts"]]
-    print(f"\nОтговори: верни и пълни {counts['complete']}, верни, но непълни {counts['partial']}, "
-          f"с невярно твърдение {counts['wrong']}, отказ {counts['refused']}")
-    print(f"Ключови факти в отговорите: {_share(sum(facts), len(facts))}")
+    print(f"\nОтговори, строго (всяко невярно твърдение е грешка): верни и пълни {counts['complete']}, "
+          f"верни, но непълни {counts['partial']}, с невярно твърдение {counts['wrong']}, отказ {counts['refused']}")
+    print(f"Отговори, меко (грешка е само грешката по същество): верни и пълни {counts['complete']}, "
+          f"непълни или със странична неточност {counts['partial'] + minor}, с грешка по същество {core}")
+    print(f"Вярност ({answered_in} отговора): без невярно твърдение "
+          f"{_share(counts['complete'] + counts['partial'], answered_in)}, странична неточност "
+          f"{_share(minor, answered_in)}, грешка по същество {_share(core, answered_in)}")
+    print(f"Изчерпателност (ключови факти в отговорите): {_share(sum(facts), len(facts))}")
     result["answers"] = counts
+    result["answers_lenient"] = {"complete": counts["complete"], "partial": counts["partial"] + minor,
+                                 "wrong": core, "refused": counts["refused"]}
+    result["correctness"] = {"no_error": counts["complete"] + counts["partial"], "minor": minor, "core": core}
     result["facts"] = {"present": sum(facts), "total": len(facts)}
 
     flags = [f["real_error"] for e in labels.values() for f in e.get("flags", [])]
@@ -588,20 +669,30 @@ def report(args):
     print(f"Пропуснати от проверката грешки: {missed}; дял на откритите сред всички забелязани: "
           f"{_share(sum(flags), sum(flags) + missed)}")
     result["grounding"] = {"answers": answered, "flags": len(flags), "real": sum(flags), "missed": missed}
+    _report_links_and_time(rows, in_scope, labels, result, labelled)
+    _save_report(args, result)
 
+
+def _report_links_and_time(rows: list[dict], in_scope: list[dict], labels: dict, result: dict, labelled: bool):
+    answered = [r for r in in_scope if r.get("answer") is not None]
+    n_links = sum(len(r["links"]) for r in answered)
+    n_unmatched = sum(len(r["unmatched"]) for r in answered)
+    print(f"\nМаркиране на източниците: {n_links} връзки, {n_unmatched} изречения без съответствие")
+    result["attribution_auto"] = {"links": n_links, "unmatched": n_unmatched}
     links = [l["verdict"] for r in in_scope for l in labels[r["id"]].get("links", [])]
     unmatched = [u["verdict"] for r in in_scope for u in labels[r["id"]].get("unmatched", [])]
-    if links and all(v in LINK_VERDICTS for v in links) and all(v in UNMATCHED_VERDICTS for v in unmatched):
-        print(f"\nМаркиране на източниците: верни връзки {_share(links.count('correct'), len(links))}, "
+    if labelled and links and all(v in LINK_VERDICTS for v in links) and all(v in UNMATCHED_VERDICTS for v in unmatched):
+        print(f"Верни връзки {_share(links.count('correct'), len(links))}, "
               f"грешни {links.count('wrong')}, неясни {links.count('unclear')}")
         print(f"Изречения без съответствие: {len(unmatched)} " + str({v: unmatched.count(v) for v in UNMATCHED_VERDICTS}))
         result["attribution"] = {"links": {v: links.count(v) for v in LINK_VERDICTS},
                                  "unmatched": {v: unmatched.count(v) for v in UNMATCHED_VERDICTS}}
     else:
-        print(f"\nМаркиране на източниците: {len(links)} връзки, не всички са оценени (по желание)")
-    used = sum(r.get("sources_used", 0) for r in in_scope)
-    total_sources = sum(len(r["chunk_ids"]) for r in in_scope if r.get("answer") is not None)
+        print("Присъдите за връзките не са попълнени (по желание)")
+    used = sum(r.get("sources_used", 0) for r in answered)
+    total_sources = sum(len(r["chunk_ids"]) for r in answered)
     print(f"Използвани в отговора откъси: {used} от {total_sources}")
+    result["sources_used"] = {"used": used, "shown": total_sources}
 
     retrieval_s = [r["retrieval_seconds"] for r in rows[1:]]  # the first includes loading the models
     generation_s = [r["generation_seconds"] for r in rows if "generation_seconds" in r]
@@ -609,6 +700,9 @@ def report(args):
           f"генериране медиана {statistics.median(generation_s):.1f} s (макс. {max(generation_s):.1f} s)")
     result["seconds"] = {"retrieval_median": statistics.median(retrieval_s),
                          "generation_median": statistics.median(generation_s), "generation_max": max(generation_s)}
+
+
+def _save_report(args, result: dict):
     path = Path(args.report_out)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:

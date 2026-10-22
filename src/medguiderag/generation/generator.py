@@ -1,3 +1,5 @@
+import re
+
 import ollama
 
 from medguiderag.config import OLLAMA_MODEL
@@ -8,6 +10,8 @@ INSTRUCTIONS = (
     "Отговори на въпроса само с информация от горните откъси от национални "
     "фармакотерапевтични ръководства. Не добавяй факти, които не са в откъсите."
 )
+# BgGPT 4B sometimes starts the answer by repeating the instruction (1 of 63 answers in the final evaluation).
+_ECHO = re.compile(r"\s*" + r"\s+".join(map(re.escape, INSTRUCTIONS.split())) + r"\s*")
 
 # 8192 holds five chunks and the answer (Ollama's default 4096 truncates even 5 chunks); temperature 0 keeps
 # answers nearly repeatable (the GPU may still give two variants).
@@ -38,6 +42,9 @@ def generate_answer(question: str, chunks: list[dict], model: str = OLLAMA_MODEL
         options=GENERATION_OPTIONS,
     )
     answer = response["message"]["content"]
+    echo = _ECHO.match(answer)
+    if echo:
+        answer = answer[echo.end():]
     if response["done_reason"] == "length":
         # Cut off by num_predict: mark it so the reader does not take a partial answer as complete.
         answer += " […]"

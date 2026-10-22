@@ -11,6 +11,7 @@ import torch
 
 from medguiderag.config import EMBEDDING_MODEL_CANDIDATES, GENERATOR_MODELS
 from medguiderag.generation.attribution import Attributor, normalized_text
+from medguiderag.generation.coverage import CoverageChecker, refusal_message
 from medguiderag.generation.generator import generate_answer
 from medguiderag.generation.grounding import GroundingChecker, highlight
 from medguiderag.indexing.embed import embed_texts
@@ -34,6 +35,11 @@ def get_retriever(model_name: str, hybrid: bool) -> Retriever | HybridRetriever:
 @st.cache_resource
 def get_checker() -> GroundingChecker:
     return GroundingChecker([c["text"] for c in load_chunks()])
+
+
+@st.cache_resource
+def get_coverage() -> CoverageChecker:
+    return CoverageChecker([c["text"] for c in load_chunks()])
 
 
 @st.cache_resource
@@ -76,6 +82,13 @@ if question:
         st.warning(
             "В ръководствата не бяха открити откъси, свързани с въпроса, затова отговор не беше генериран."
         )
+        st.stop()
+
+    coverage = get_coverage().check(question, chunks)
+    if not coverage.answerable:
+        # Medical questions outside the guidelines pass the threshold on shared words; without the key concept
+        # in the chunks the generator would answer from unrelated text.
+        st.warning(refusal_message(coverage))
         st.stop()
 
     with st.spinner("Генериране на отговор..."):
