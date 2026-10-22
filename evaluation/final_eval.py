@@ -368,6 +368,7 @@ LABELS_GUIDE = {
                       "популация, продължителност) | minor (основният отговор е верен, грешката е в странична "
                       "подробност); иначе null",
     "present, real_error": "true | false",
+    "facts.relevant": "по желание: false, ако фактът не се отнася пряко за въпроса; тогава не се брои за изчерпателността",
     "missed_errors": "неподкрепени подробности от отговора, които проверката не е отбелязала, напр. [\"8-16 mg/kg\"]",
     "links.verdict": "correct | wrong | unclear (по желание)",
     "unmatched.verdict": "unsupported (наистина не е в откъсите) | missed_match (има го, но не е свързано) | unclear "
@@ -646,7 +647,8 @@ def report(args):
     severities = [labels[r["id"]]["error_severity"] for r in in_scope if labels[r["id"]]["answer_verdict"] == "wrong"]
     core, minor = severities.count("core"), severities.count("minor")
     answered_in = len(in_scope) - counts["refused"]
-    facts = [f["present"] for r in in_scope for f in labels[r["id"]]["facts"]]
+    # A fact marked "relevant": false does not answer the question as asked and is left out of the share.
+    facts = [f["present"] for r in in_scope for f in labels[r["id"]]["facts"] if f.get("relevant", True)]
     print(f"\nОтговори, строго (всяко невярно твърдение е грешка): верни и пълни {counts['complete']}, "
           f"верни, но непълни {counts['partial']}, с невярно твърдение {counts['wrong']}, отказ {counts['refused']}")
     print(f"Отговори, меко (грешка е само грешката по същество): верни и пълни {counts['complete']}, "
