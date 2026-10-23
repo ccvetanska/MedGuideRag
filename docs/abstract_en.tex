@@ -1,0 +1,38 @@
+% !TEX program = xelatex
+\documentclass[12pt,a4paper]{article}
+\usepackage{fontspec}
+\setmainfont{Liberation Serif}
+\usepackage[english]{babel}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage[expansion=false]{microtype}
+\usepackage{hyperref}
+\hypersetup{hidelinks,
+  pdftitle={Abstract: A Retrieval-Augmented Generation System for Accessing Pharmacotherapeutic Guidelines in Bulgarian},
+  pdfauthor={Tsvetelina Pashovska}}
+% Thesis font and indentation, without extra space between paragraphs (fits on one page).
+\usepackage{indentfirst}
+\setlength{\parindent}{1.25cm}
+\setlength{\parskip}{0pt}
+\widowpenalty=10000
+\clubpenalty=10000
+\pagestyle{empty}
+
+\begin{document}
+
+\begin{center}
+{\small Sofia University ``St.\ Kliment Ohridski'', Faculty of Mathematics and Informatics\\
+Master's programme ``Artificial Intelligence''}\\[0.8em]
+{\large\bfseries A Retrieval-Augmented Generation (RAG) System for Accessing\\ Pharmacotherapeutic Guidelines in Bulgarian}\\[0.6em]
+Author: Tsvetelina Pashovska \qquad Supervisor: Prof.\ Maria Nisheva, PhD\\[0.8em]
+{\bfseries ABSTRACT}
+\end{center}
+
+The pharmacotherapeutic guidelines approved by the Bulgarian National Council on Prices and Reimbursement of Medicinal Products contain official treatment recommendations, but they are published as lengthy PDF documents with heterogeneous layouts, some of them scanned. A survey of general practitioners confirms the need for easier access to up-to-date medical information, but also their concern about errors. No published retrieval-augmented generation system for medical guidelines in Bulgarian was found. The aim of this thesis is to develop a prototype of such a system over a corpus of 1,380 passages from 17 national guidelines, built in the author's pre-diploma project.
+
+The final system was developed iteratively, with every decision tested experimentally and the differences between variants checked with statistical tests. Retrieval is hybrid: semantic search with the bge-m3 model, chosen after comparing three multilingual embedding models, and lexical BM25 search over truncated word stems, combined by reciprocal rank fusion and reordered by a reranking model whose score also serves as a refusal threshold. Answers are generated locally by the 4-billion-parameter BgGPT model. Prompt experiments show that the small model ignores passages far from the question and fabricates sources when asked to cite them. Therefore, the most relevant passage is placed closest to the question, and the sources are displayed by the system itself. Unsupported answers are limited at several levels: a check before generation that the key concepts of the question occur in the passages, a check of the answer for drug names, ATC codes and numbers absent from the passages, and highlighting of the source sentences the answer relies on. The web application runs entirely locally on a GPU with 6~GB of memory and generates an answer in 6--8 seconds.
+
+The final evaluation used an independent set of 59 in-scope questions and 10 out-of-scope medical questions, and the answers were judged manually with the participation of a general practitioner. The correct passage is ranked first for 58\% of the questions and is among the five shown for 86\%, and reranking significantly improves the ranking over semantic search alone. Of the answers, 76\% contain no substantive error, and 42\% are correct and comprehensive (they contain all facts relevant to the question). The refusal threshold alone does not recognize out-of-scope medical questions, but with the key-concept check the system declines seven of the ten without a single false refusal, and none of the ten receives fabricated content.
+
+Answer quality depends primarily on retrieval, and protection against unsupported answers needs several levels. The main limitations are the small generative model, which mixes details from adjacent passages, and problems in the data: text distorted by scanning, lost drug names, and guidelines that give different doses for the same drug. To develop the system further and improve the results, it would be advisable to use a larger generative model, to chunk the text along guideline sections, and to take guideline versions into account, so that information from newer guidelines takes priority over that from older ones.
+
+\end{document}
