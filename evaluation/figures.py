@@ -3,7 +3,7 @@
     python -m evaluation.figures
 
 - threshold_calibration.pdf: top reranker score per development and out-of-scope question, with the
-  refusal threshold (section 4.3, "Праг за отказ").
+  refusal threshold (section 4.3).
 - chunk_lengths.pdf: chunk length in tokens against the embedding models' maximum input (section 4.2).
 - rank_complementarity.pdf: rank of the gold chunk under bge-m3 and under BM25 with stems (section 4.3).
 
@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 from evaluation.common import CHUNKS, EVAL_DIR, GOLD, load
 from evaluation.input_coverage import MAX_INPUT, load_tokenizer
-from medguiderag.config import RERANK_MIN_SCORE
+from medguiderag.config import RERANK_CANDIDATES, RERANK_MIN_SCORE
 
 FIGURES_DIR = EVAL_DIR.parent / "docs" / "figures"
 
@@ -109,8 +109,8 @@ def chunk_lengths():
     ax.set_xlabel("Дължина на откъса (токени)")
     ax.set_ylabel("Брой откъси")
 
-    # The short-input labels are broken so that each fits between its line and the next one.
-    labels = {128: "paraphrase-\nmultilingual-mpnet-\nbase-v2: 128", 512: "multilingual-e5-base: 512"}
+    # Short model names, as in the thesis text and tables.
+    labels = {128: "mpnet: 128", 512: "e5-base: 512"}
     for name, limit in MAX_INPUT.items():
         if limit > 1500:
             continue
@@ -130,35 +130,48 @@ def rank_complementarity():
         return ranking.index(gold) + 1 if gold in ranking else beyond
 
     pairs = Counter((rank(a, g), rank(b, g)) for a, b, g in zip(runs["BAAI/bge-m3"], runs["bm25-stem6"], GOLD))
-    fig, ax = plt.subplots(figsize=(4.2, 3.9))
-    for (x, y), n in pairs.items():
-        ax.scatter(x, y, s=26 + 14 * (n - 1), color=BLUE, edgecolors="white", linewidths=0.8, zorder=3)
-        if n > 1:
-            ax.annotate(f"×{n}", (x, y), xytext=(6, 4), textcoords="offset points", color=INK, fontsize=8)
+    cut = RERANK_CANDIDATES  # the fused list keeps this many candidates for the reranker
+
+    def found(in_a: bool, in_b: bool) -> int:
+        return sum(n for (x, y), n in pairs.items() if (x <= cut) == in_a and (y <= cut) == in_b)
+
+    lo, hi = 0.75, 150
+    fig, ax = plt.subplots(figsize=(4.6, 4.3))
     ax.set_xscale("log")
     ax.set_yscale("log")
+    ax.set_xlim(lo, hi)
+    ax.set_ylim(lo, hi)
     ticks = [1, 2, 5, 10, 20, 50, beyond]
     labels = [str(t) for t in ticks[:-1]] + [f">{depth}"]
     ax.set_xticks(ticks, labels)
     ax.set_yticks(ticks, labels)
     for axis in (ax.xaxis, ax.yaxis):
         axis.set_minor_locator(matplotlib.ticker.NullLocator())
-    ax.set_xlim(0.8, 130)
-    ax.set_ylim(0.8, 130)
     ax.grid(color=GRID, linewidth=0.6, zorder=0)
-    ax.plot([0.8, 130], [0.8, 130], color=GRID, linewidth=1, zorder=1)
 
-    cut = 20
+    # Shaded: both methods have the gold chunk among their first `cut` results.
+    ax.fill_between([lo, cut], lo, cut, color=BLUE, alpha=0.08, linewidth=0, zorder=1)
+    ax.plot([lo, hi], [lo, hi], color=GRID, linewidth=1, zorder=1)  # same position under both methods
     for line in (ax.axvline, ax.axhline):
-        line(cut, color=INK, linewidth=1, linestyle=(0, (4, 3)), zorder=2)
-    def found(in_a: bool, in_b: bool) -> int:
-        return sum(n for (x, y), n in pairs.items() if (x <= cut) == in_a and (y <= cut) == in_b)
+        line(cut, color=INK_MUTED, linewidth=0.9, linestyle=(0, (4, 3)), zorder=2)
 
-    ax.text(1.0, 115, f"само семантичното: {found(True, False)}", va="top", color=INK, fontsize=8)
-    ax.text(23, 0.9, f"само лексикалното: {found(False, True)}", va="bottom", color=INK, fontsize=8)
-    ax.text(1.0, 15, f"и двата метода: {found(True, True)}", va="center", color=INK, fontsize=8)
-    ax.set_xlabel("Позиция на верния откъс: семантично търсене (bge-m3)")
-    ax.set_ylabel("Позиция на верния откъс: BM25 със съкращаване")
+    for (x, y), n in pairs.items():
+        ax.scatter(x, y, s=26 + 14 * (n - 1), color=BLUE, edgecolors="white", linewidths=0.8, zorder=3)
+        if n > 1:
+            ax.annotate(f"×{n}", (x, y), xytext=(6, 4), textcoords="offset points", color=INK, fontsize=8)
+
+    # One count per quadrant, in its outer corner, where no point lies.
+    box = dict(boxstyle="round,pad=0.25", facecolor="white", edgecolor="none", alpha=0.9)
+    quadrants = [
+        (lo * 1.12, hi * 0.9, "left", "top", f"само семантичното: {found(True, False)}"),
+        (hi * 0.9, hi * 0.9, "right", "top", f"нито един: {found(False, False)}"),
+        (hi * 0.9, lo * 1.1, "right", "bottom", f"само лексикалното: {found(False, True)}"),
+        (cut * 0.88, cut * 0.88, "right", "top", f"и двата метода: {found(True, True)}"),
+    ]
+    for x, y, ha, va, text in quadrants:
+        ax.text(x, y, text, ha=ha, va=va, color=INK, fontsize=8, bbox=box, zorder=4)
+    ax.set_xlabel("Позиция при семантичното търсене (bge-m3)")
+    ax.set_ylabel("Позиция при BM25 със съкращаване")
     return fig
 
 

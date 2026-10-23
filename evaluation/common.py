@@ -1,6 +1,5 @@
 """Shared pieces of the evaluation scripts: the development set, retrieval metrics, result files."""
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -10,10 +9,6 @@ EVAL_DIR = Path(__file__).resolve().parent
 DATA_DIR = EVAL_DIR / "data"
 RESULTS_DIR = EVAL_DIR / "results"          # where the scripts write
 THESIS_RESULTS_DIR = RESULTS_DIR / "thesis"  # archived outputs the thesis numbers come from; never overwritten
-
-M26 = "hf.co/INSAIT-Institute/BgGPT-Gemma-2-2.6B-IT-v1.0-GGUF:Q4_K_M"
-M4 = "hf.co/INSAIT-Institute/BgGPT-Gemma-3-4B-IT-GGUF:Q4_K_M"
-GENERATORS = {"2.6B": M26, "4B": M4}
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -27,10 +22,6 @@ GOLD = [CHUNK_INDEX[d["chunk_id"]] for d in DEV]
 OUT_OF_SCOPE = json.load(open(DATA_DIR / "out_of_scope.json", encoding="utf-8"))
 # Key facts of the source chunk(s) as regular expressions, for the control questions.
 FACTS = json.load(open(DATA_DIR / "facts.json", encoding="utf-8"))
-
-
-def count_facts(question: str, answer: str) -> int:
-    return sum(bool(re.search(f, answer.lower())) for f in FACTS[question])
 
 
 def _lenient_hit(pred: int, gold: int) -> bool:

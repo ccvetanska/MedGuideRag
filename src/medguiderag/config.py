@@ -7,7 +7,6 @@ CORPUS_DIR = DATA_DIR / "processed"
 CHUNKS_PATH = CORPUS_DIR / "chunks.jsonl"
 DOCUMENTS_PATH = CORPUS_DIR / "documents.jsonl"
 INDEX_DIR = DATA_DIR / "index"
-REPORTS_DIR = PROJECT_ROOT / "reports"
 
 OLLAMA_MODEL = "hf.co/INSAIT-Institute/BgGPT-Gemma-3-4B-IT-GGUF:Q4_K_M"
 

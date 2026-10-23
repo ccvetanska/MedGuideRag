@@ -1,7 +1,7 @@
 """Run the source highlighting (generation/attribution.py) over saved answers and dump every link.
 
-    python -m evaluation.attribution_eval                                   # 4B answers to the 24 questions (thesis)
-    python -m evaluation.attribution_eval results/generation_answers.json   # answers from generation_eval.py
+    python -m evaluation.attribution_eval                   # 4B answers to the 24 questions (thesis)
+    python -m evaluation.attribution_eval <answers.json>    # other saved answers with "question", "answer", "chunk_ids"
 
 Prints the summary counts and every link (answer sentence -> chunk sentence) for manual review; sentences with
 no link are listed as UNMATCHED. The manual verdicts behind the thesis numbers are in

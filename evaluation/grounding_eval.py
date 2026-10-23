@@ -1,7 +1,7 @@
 """Run the grounding check (generation/grounding.py) over saved answers and list every flagged detail.
 
-    python -m evaluation.grounding_eval                                    # the 132 answers of the thesis evaluation
-    python -m evaluation.grounding_eval results/generation_answers.json    # answers from generation_eval.py
+    python -m evaluation.grounding_eval                   # the 132 answers of the thesis evaluation
+    python -m evaluation.grounding_eval <answers.json>    # other saved answers
 
 Each answer file is a list of rows with "question", "answer" and "chunk_ids" (the chunks the prompt showed).
 For the thesis set, the manual verdicts on the flags are in results/thesis/grounding_flags_labelled.json.

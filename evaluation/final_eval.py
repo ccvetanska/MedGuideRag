@@ -1,4 +1,4 @@
-"""Final evaluation on 60 independently written questions and 10 outside the guidelines (thesis section
+"""Final evaluation on 59 independently written questions and 10 outside the guidelines (thesis section
 "Качествен анализ и оценка").
 
     python -m evaluation.final_eval check    # while writing data/final_questions.json: finds each answer's chunk
@@ -28,7 +28,8 @@ K = 5
 # Share of the quote's words that must appear, in order, in a chunk for it to count as the answer's chunk.
 MATCH_MIN = 0.8
 QUOTE_MIN_WORDS = 6
-# See generation_eval.py: unloading the model this often keeps the Ollama runner's prompt cache within RAM.
+# The Ollama runner keeps every prompt's state in RAM (~0.5 GB for 5,500 tokens); unloading the model this
+# often keeps it from running out of memory ("model runner has unexpectedly stopped", std::bad_alloc).
 UNLOAD_EVERY = 8
 OTHER_EMBEDDINGS = {"intfloat/multilingual-e5-base": "e5-base",
                     "sentence-transformers/paraphrase-multilingual-mpnet-base-v2": "mpnet"}
@@ -253,8 +254,6 @@ def check(args):
     total = len(questions["in_scope"]) + len(questions["out_of_scope"])
     print(f"\nГотови: {total - problems} от {total}." + ("" if problems else " Може да се пусне run (със спряно приложение)."))
 
-
-# ---- run ----
 
 def retrieve(rows: list[dict]):
     import torch
@@ -505,8 +504,6 @@ def run(args):
     for p in targets:
         print("saved", p)
 
-
-# ---- report ----
 
 def _unlabelled(labels: dict) -> list[str]:
     """Per question, the required verdicts still missing or misspelled; the link verdicts are optional."""
