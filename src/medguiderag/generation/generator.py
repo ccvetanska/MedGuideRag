@@ -13,10 +13,8 @@ INSTRUCTIONS = (
 # BgGPT 4B sometimes starts the answer by repeating the instruction (1 of 63 answers in the final evaluation).
 _ECHO = re.compile(r"\s*" + r"\s+".join(map(re.escape, INSTRUCTIONS.split())) + r"\s*")
 
-# 8192 holds five chunks and the answer (Ollama's default 4096 truncates even 5 chunks); temperature 0 keeps
-# answers nearly repeatable (the GPU may still give two variants).
-# Greedy decoding looped on a single drug-list chunk (the same 4 lines until the context filled, ~2 min);
-# repeat_penalty 1.2 stopped it without losing facts. num_predict bounds the time if a loop still happens.
+# 8192 tokens fit five chunks and the answer (Ollama's default 4096 does not); repeat_penalty stops greedy
+# decoding from looping on list-like chunks, and num_predict bounds the time if a loop still happens.
 GENERATION_OPTIONS = {"num_ctx": 8192, "temperature": 0, "repeat_penalty": 1.2, "num_predict": 1024}
 
 

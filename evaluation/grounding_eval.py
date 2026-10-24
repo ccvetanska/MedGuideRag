@@ -29,13 +29,16 @@ def main():
     flags, answers, flagged, kinds = [], 0, 0, Counter()
     for path in args.files:
         for row in load(path):
-            issues = sorted({(i.kind, i.text, i.reason) for i in checker.check(row["answer"], chunks_by_id(row["chunk_ids"]), row["question"])})
+            found = checker.check(row["answer"], chunks_by_id(row["chunk_ids"]), row["question"])
+            issues = sorted({(i.kind, i.text, i.reason) for i in found})
             answers += 1
             flagged += bool(issues)
             kinds.update(kind for kind, _, _ in issues)
             if issues:
-                print(f"{describe(row)[:28]:28} | {row['question'][:42]:42} | " + "; ".join(f"{k}: {t} ({why})" for k, t, why in issues))
-            flags += [{"set": describe(row), "question": row["question"], "kind": k, "text": t, "reason": why} for k, t, why in issues]
+                details = "; ".join(f"{k}: {t} ({why})" for k, t, why in issues)
+                print(f"{describe(row)[:28]:28} | {row['question'][:42]:42} | {details}")
+            flags += [{"set": describe(row), "question": row["question"], "kind": k, "text": t, "reason": why}
+                      for k, t, why in issues]
     print(f"\n{answers} answers, {flagged} with flagged details, {len(flags)} details by kind: {dict(kinds)}")
     labelled = THESIS_RESULTS_DIR / "grounding_flags_labelled.json"
     if args.files == THESIS_SETS and labelled.exists():

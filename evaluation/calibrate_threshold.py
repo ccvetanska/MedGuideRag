@@ -29,8 +29,9 @@ def main():
         top1.append(scores[0])
         gold_scores += [s for i, s in zip(ids, scores) if i == gold]
         kept.append(sum(s >= RERANK_MIN_SCORE for s in scores[:5]))
-        dev.append({"question": q, "top5": [[CHUNKS[i]["chunk_id"], round(s, 3), label(i, gold)] for i, s in zip(ids[:5], scores[:5])]})
-        print(f"  {q[:55]:55} " + " ".join(f"{s:.3f}{label(i, gold)}" for i, s in zip(ids[:5], scores[:5])))
+        top5 = list(zip(ids[:5], scores[:5]))
+        dev.append({"question": q, "top5": [[CHUNKS[i]["chunk_id"], round(s, 3), label(i, gold)] for i, s in top5]})
+        print(f"  {q[:55]:55} " + " ".join(f"{s:.3f}{label(i, gold)}" for i, s in top5))
     print("\nOut of scope, top-5 reranker scores:")
     ooc = []
     for q in OUT_OF_SCOPE:

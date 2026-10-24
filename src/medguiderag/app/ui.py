@@ -19,7 +19,7 @@ from medguiderag.ingest.load_chunks import load_chunks
 from medguiderag.retrieval.hybrid import HybridRetriever
 from medguiderag.retrieval.retriever import Retriever
 
-st.set_page_config(page_title="MedGuideRag", page_icon="💊")
+st.set_page_config(page_title="MedGuideRag")
 st.title("MedGuideRag")
 st.caption(
     "Демонстрационен прототип: въпроси към национални фармакотерапевтични "
@@ -49,7 +49,8 @@ def get_attributor(model_name: str) -> Attributor:
 
 
 def marked(text: str, spans: list[tuple[int, int]]) -> str:
-    """Chunk text as HTML with the supporting sentences in <mark>; inside a <div> Streamlit leaves it unparsed as markdown."""
+    """Chunk text as HTML with the supporting sentences in <mark>; the <div> keeps Streamlit from parsing it
+    as markdown."""
     out, pos = [], 0
     for start, end in spans:
         out += [html.escape(text[pos:start]), f"<mark>{html.escape(text[start:end])}</mark>"]
@@ -101,14 +102,16 @@ if question:
     st.markdown(highlight(answer, issues))
     if issues:
         details = ", ".join(dict.fromkeys(f"{i.text} ({i.reason})" for i in issues))
-        st.warning(f"Следните подробности от отговора не се срещат в показаните откъси и може да са неточни: {details}.")
+        st.warning("Следните подробности от отговора не се срещат в показаните откъси и може да са неточни: "
+                   f"{details}.")
     st.caption(
         "Отговорът е генериран от езиков модел въз основа на откъсите по-долу и може да съдържа "
         "неточности. Проверявайте информацията в посочените източници."
     )
-    if attribution.unsupported:
-        with st.expander(f"Изречения от отговора без открито съответствие в откъсите ({len(attribution.unsupported)})"):
-            for sentence in attribution.unsupported:
+    unsupported = attribution.unsupported
+    if unsupported:
+        with st.expander(f"Изречения от отговора без открито съответствие в откъсите ({len(unsupported)})"):
+            for sentence in unsupported:
                 st.markdown(f"- {sentence}")
 
     st.subheader("Източници")
@@ -117,6 +120,7 @@ if question:
     for i, c in enumerate(chunks):
         spans = attribution.highlights.get(i, [])
         usage = f"маркирани изречения: {len(spans)}" if spans else "не е използван в отговора"
-        with st.expander(f"{c['document']} · стр. {c['page_start']}-{c['page_end']} · {score_label} {c['score']:.3f} · {usage}"):
+        pages = f"стр. {c['page_start']}-{c['page_end']}"
+        with st.expander(f"{c['document']} · {pages} · {score_label} {c['score']:.3f} · {usage}"):
             st.caption(c["section"])
             st.markdown(marked(normalized_text(c), spans), unsafe_allow_html=True)

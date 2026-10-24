@@ -11,7 +11,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from medguiderag.config import COVERAGE_MAX_CHUNKS
-from medguiderag.generation.grounding import _INN_STEMS, _WORD, _cyrillic_forms, _skeletons
+from medguiderag.generation.grounding import INN_STEMS, WORD, cyrillic_forms, skeletons
 
 # Question words and generic words of medical questions: frequent in questions, rare in guideline text.
 _STOP = set("""какво каква какви какъв кои кой коя кое кога колко как защо дали може трябва има няма
@@ -36,8 +36,8 @@ class Coverage:
 
 def _forms(word: str) -> set[str]:
     w = word.lower()
-    forms = ({w} | _cyrillic_forms(w)) if re.search("[а-я]", w) else {w}
-    return forms | _skeletons(word)
+    forms = ({w} | cyrillic_forms(w)) if re.search("[а-я]", w) else {w}
+    return forms | skeletons(word)
 
 
 def _prefixes(word: str) -> set[str]:
@@ -50,14 +50,14 @@ def _keys(word: str) -> set[str]:
 
 
 def _parts(text: str):
-    for w in _WORD.findall(text):
+    for w in WORD.findall(text):
         for part in w.split("-"):
             if len(part) >= 4:
                 yield part
 
 
 def _content_words(question: str):
-    for n, w in enumerate(_WORD.findall(question)):
+    for n, w in enumerate(WORD.findall(question)):
         # Eponyms ("Гилен-Баре", "Уилсън") are transliterated differently in the guidelines; abbreviations stay.
         if n and re.match("[А-Я]", w) and not w.isupper():
             continue
@@ -71,31 +71,31 @@ def _content_words(question: str):
 
 
 def _drug_like(word: str) -> bool:
-    stems = _cyrillic_forms(word) if re.search("[а-яА-Я]", word) else {word.lower()}
-    return len(word) >= 6 and any(s.endswith(_INN_STEMS + _DRUG_ENDINGS) for s in stems)
+    stems = cyrillic_forms(word) if re.search("[а-яА-Я]", word) else {word.lower()}
+    return len(word) >= 6 and any(s.endswith(INN_STEMS + _DRUG_ENDINGS) for s in stems)
 
 
 class CoverageChecker:
     def __init__(self, corpus_texts: list[str], max_chunks: int = COVERAGE_MAX_CHUNKS):
-        # A word is specific when its stem occurs in at most max_chunks chunks (about 2% of the corpus).
         self.max_chunks = max_chunks
         chunks_of = defaultdict(set)
         for i, text in enumerate(corpus_texts):
             for part in _parts(text):
                 for p in _prefixes(part):
                     chunks_of[p].add(i)
-        self.df = {p: len(ids) for p, ids in chunks_of.items()}
+        # Number of corpus chunks that contain each stem.
+        self.chunk_count = {p: len(ids) for p, ids in chunks_of.items()}
 
     def check(self, question: str, chunks: list[dict]) -> Coverage:
         shown = {p for c in chunks for part in _parts(c["text"]) for p in _prefixes(part)}
         specific, absent = [], []
         for word in _content_words(question):
             keys = _keys(word)
-            df = max(self.df.get(k, 0) for k in keys)
-            if df == 0:
+            count = max(self.chunk_count.get(k, 0) for k in keys)
+            if count == 0:
                 if _drug_like(word):
                     absent.append(word)
-            elif df <= self.max_chunks:
+            elif count <= self.max_chunks:
                 specific.append((word, keys))
         if absent:
             return Coverage(False, "corpus", tuple(absent))

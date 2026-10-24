@@ -1,4 +1,7 @@
-"""Find details in a generated answer that the retrieved chunks do not support: drug names, ATC codes and numbers."""
+"""Find details in a generated answer that the retrieved chunks do not support: drug names, ATC codes and numbers.
+
+The spelling helpers (WORD, NUMBER, skeletons, ...) are shared with coverage.py and attribution.py.
+"""
 import re
 from collections import Counter
 from dataclasses import dataclass
@@ -11,17 +14,18 @@ _CYRILLIC = dict(zip("абвгдежзийклмнопрстуфхцчшщъью
 # Bulgarian definite articles and plural endings, longest first: "метоклопрамидът" -> "метоклопрамид".
 _BG_ENDINGS = ("овете", "ите", "ове", "ът", "ят", "та", "то", "те", "а", "я", "и")
 # WHO INN stems: a Cyrillic word with one of these endings is taken as a drug name even if the corpus lacks it.
-_INN_STEMS = ("олол", "прил", "сартан", "дипин", "статин", "празол", "маб", "тиниб", "вир", "цилин", "циклин",
+INN_STEMS = ("олол", "прил", "сартан", "дипин", "статин", "празол", "маб", "тиниб", "вир", "цилин", "циклин",
               "флоксацин", "мицин", "платин", "таксел", "парин", "семид", "тиазид", "тидин", "сетрон", "триптан",
               "азепам", "оксетин", "глиптин", "глитазон", "глифлозин", "профен", "низолон")
-_WORD = re.compile(r"[A-Za-zА-Яа-я][A-Za-zА-Яа-я\-]*")
+WORD = re.compile(r"[A-Za-zА-Яа-я][A-Za-zА-Яа-я\-]*")
 _CODE = re.compile(r"(?<![A-Za-zА-Яа-я0-9])[A-ZА-Я][0-9ОOЗ]{2}[A-ZА-Я]{2}[0-9ОOЗ]{2}(?![A-Za-zА-Яа-я0-9])")
 # A number, preferring digit groups ("90 000", "25,000") so they are read whole; digits glued to letters
 # ("HER2", "5-HT3", "B12") are part of a name, not a quantity.
-_NUMBER = re.compile(r"(?<![\w.,])(?:\d{1,3}(?:[  .,]\d{3})+|\d+(?:[.,]\d+)?)(?![\d])")
+NUMBER = re.compile(r"(?<![\w.,])(?:\d{1,3}(?:[  .,]\d{3})+|\d+(?:[.,]\d+)?)(?![\d])")
 _PLAIN_NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
 _ENUMERATOR = re.compile(r"(?m)^[ \t]*(?:[-*][ \t]*)?\d+[.)][ \t]")
-_UNIT = re.compile(r" ?(?:%|(?:mg|g|µg|μg|mcg|kg|ml|l|IU|U|mmol|мг|мл|ME)(?:/[A-Za-zа-я0-9²³]+)*|часа|дни|седмици|месеца)(?![A-Za-zА-Яа-я])")
+_UNIT = re.compile(r" ?(?:%|(?:mg|g|µg|μg|mcg|kg|ml|l|IU|U|mmol|мг|мл|ME)(?:/[A-Za-zа-я0-9²³]+)*"
+                   r"|часа|дни|седмици|месеца)(?![A-Za-zА-Яа-я])")
 _NON_DRUG_LATIN = {"rec", "inn", "atc", "mg", "kg"}
 # "стр. 17" or "стр. 17-19" right before a number: a page reference to the shown source, not a quantity.
 _PAGE_REF = re.compile(r"стр\.?\s*(?:\d+\s*[-–]\s*)?$")
@@ -36,23 +40,23 @@ class Issue:
     end: int
 
 
-def _unmix(word: str) -> str:
+def unmix(word: str) -> str:
     """OCR writes Latin names with stray Cyrillic lookalikes ("Chlоrpromazine"); make such words fully Latin."""
     if re.search("[A-Za-z]", word) and re.search("[а-яА-Я]", word):
         word = word.translate(_LOWER_HOMOGLYPHS).translate(_HOMOGLYPHS)
     return word
 
 
-def _cyrillic_forms(word: str) -> set[str]:
+def cyrillic_forms(word: str) -> set[str]:
     w = word.lower()
     return {w} | {w[: -len(e)] for e in _BG_ENDINGS if w.endswith(e) and len(w) - len(e) >= 4}
 
 
-def _skeletons(word: str) -> set[str]:
+def skeletons(word: str) -> set[str]:
     """Spelling-independent keys, so "Metoclopramide" and "метоклопрамида" share one."""
-    w = _unmix(word).lower().strip("-")
+    w = unmix(word).lower().strip("-")
     if re.search("[а-я]", w):
-        forms = {"".join(_CYRILLIC.get(ch, ch) for ch in f).replace("_", "") for f in _cyrillic_forms(w)}
+        forms = {"".join(_CYRILLIC.get(ch, ch) for ch in f).replace("_", "") for f in cyrillic_forms(w)}
     else:
         w = w.replace("ph", "f").replace("th", "t").replace("ch", "h").replace("qu", "kv").replace("x", "ks")
         w = re.sub(r"c(?=[eiy])", "ts", w).replace("c", "k").replace("y", "i").replace("w", "v")
@@ -84,7 +88,7 @@ def _matches(keys: set[str], reference: set[str]) -> bool:
     return False
 
 
-def _number_values(text: str) -> set[str]:
+def number_values(text: str) -> set[str]:
     """Every reading of a number: "90,000" may be ninety thousand or ninety with a decimal comma."""
     compact = re.sub(r"[  ]", "", text)
     readings = {compact.replace(",", ".")}
@@ -106,74 +110,99 @@ def _normalize_code(code: str) -> str:
     return "".join(chars)
 
 
+def _reference_keys(reference: str, chunks: list[dict]) -> set[str]:
+    """Keys of the words in the chunks and the question, and of the chunks' file names, which the prompt shows
+    and a model may quote; hyphenated words also count by their parts ("PharmTher-onkologia_...")."""
+    words = WORD.findall(reference + " " + " ".join(c["document"] for c in chunks))
+    words += [part for w in words for part in w.split("-")]
+    return {k for w in words for k in skeletons(w)}
+
+
+def _reference_numbers(reference: str) -> set[str]:
+    """Numbers in the chunks and the question; page numbers are left out, so they cannot vouch for a made-up one."""
+    numbers = set()
+    for m in list(NUMBER.finditer(reference)) + list(_PLAIN_NUMBER.finditer(reference)):
+        numbers |= number_values(m.group(0))
+    return numbers
+
+
+def _codes_with_drugs(context: str) -> dict[str, set[str]]:
+    """Each ATC code in the chunks with the keys of the words before it ("Famotidine (Rec. INN) АТС: А02ВАОЗ")."""
+    codes = {}
+    for m in _CODE.finditer(context):
+        # 45 characters cover "• Famotidine (Rec. INN) АТС: " but not the previous list item.
+        before = context[max(0, m.start() - 45): m.start()]
+        keys = {k for w in WORD.findall(before) for k in skeletons(w)}
+        codes.setdefault(_normalize_code(m.group(0)), set()).update(keys)
+    return codes
+
+
+def _number_issues(answer: str, ref_numbers: set[str], skip: list[tuple[int, int]]) -> list[Issue]:
+    """Numbers missing from the chunks, except inside the skipped spans, list numbering and page references."""
+    skip = skip + [(m.start(), m.end()) for m in _ENUMERATOR.finditer(answer)]
+    issues = []
+    for m in NUMBER.finditer(answer):
+        if any(s <= m.start() < e for s, e in skip) or _PAGE_REF.search(answer, 0, m.start()):
+            continue
+        if not number_values(m.group(0)) & ref_numbers:
+            # A bare "16" means little to the reader; show it with its unit ("16 mg/kg") when one follows.
+            unit = _UNIT.match(answer, m.end())
+            label = m.group(0) + (unit.group(0) if unit else "")
+            issues.append(Issue("число", label, "липсва в откъсите", m.start(), m.end()))
+    return issues
+
+
 class GroundingChecker:
     def __init__(self, corpus_texts: list[str]):
         # The guidelines write drug names in Latin (INN) and general terms in Bulgarian. A key seen at least as
         # often in Latin as in Cyrillic is a drug name ("метопролол"); "терапия" is not, despite "therapy" in Latin.
         self.latin_count, self.cyrillic_count = Counter(), Counter()
         for text in corpus_texts:
-            for w in _WORD.findall(text):
+            for w in WORD.findall(text):
                 if len(w) >= 5:
-                    counts = self.cyrillic_count if re.search("[а-яА-Я]", _unmix(w)) else self.latin_count
-                    counts.update(_skeletons(w))
+                    counts = self.cyrillic_count if re.search("[а-яА-Я]", unmix(w)) else self.latin_count
+                    counts.update(skeletons(w))
 
     def _is_name(self, word: str) -> bool:
         """Latin words (in these answers: drug names, pathogens, Latin diagnoses) and Cyrillic drug names."""
-        word = _unmix(word)
+        word = unmix(word)
         if len(word) < 5 or word.lower() in _NON_DRUG_LATIN:
             return False
         if not re.search("[а-яА-Я]", word):
             return True
-        if any(f.endswith(_INN_STEMS) for f in _cyrillic_forms(word)):
+        if any(f.endswith(INN_STEMS) for f in cyrillic_forms(word)):
             return True
-        return any(self.latin_count[k] and self.latin_count[k] >= self.cyrillic_count[k] for k in _skeletons(word))
+        return any(self.latin_count[k] and self.latin_count[k] >= self.cyrillic_count[k] for k in skeletons(word))
+
+    def _code_issues(self, answer: str, ref_codes: dict[str, set[str]]) -> tuple[list[Issue], list[tuple[int, int]]]:
+        """Codes missing from the chunks or tied there to another drug, and the spans of all codes in the answer."""
+        issues, spans = [], []
+        for m in _CODE.finditer(answer):
+            code = _normalize_code(m.group(0))
+            # The code's drug stands before it, on the same line and after the previous code
+            # ("Omalizumab (R03DX05), mepolizumab (R03DX09)").
+            start = max(answer.rfind("\n", 0, m.start()) + 1, spans[-1][1] if spans else 0, m.start() - 80)
+            spans.append((m.start(), m.end()))
+            drugs = [w for w in WORD.findall(answer[start: m.start()]) if self._is_name(w)]
+            if code not in ref_codes:
+                issues.append(Issue("ATC код", m.group(0), "липсва в откъсите", m.start(), m.end()))
+            elif drugs and not _matches(skeletons(drugs[-1]), ref_codes[code]):
+                reason = f"в откъсите не е свързан с {drugs[-1]}"
+                issues.append(Issue("ATC код", m.group(0), reason, m.start(), m.end()))
+        return issues, spans
+
+    def _name_issues(self, answer: str, ref_keys: set[str]) -> list[Issue]:
+        return [Issue("наименование", m.group(0), "не се споменава в откъсите", m.start(), m.end())
+                for m in WORD.finditer(answer)
+                if self._is_name(m.group(0)) and not _matches(skeletons(m.group(0)), ref_keys)]
 
     def check(self, answer: str, chunks: list[dict], question: str = "") -> list[Issue]:
         context = " ".join(" ".join(c["text"].split()) for c in chunks)
         reference = context + " " + question
-        # The prompt also shows each chunk's file name, which a model may quote; its page numbers are
-        # left out here so they cannot vouch for a made-up number (page references are skipped below).
-        sources = " ".join(c["document"] for c in chunks)
-        # Hyphenated words also count by their parts: the file "PharmTher-onkologia_..." may be quoted as "PharmTher – onkologia".
-        ref_words = _WORD.findall(reference + " " + sources)
-        ref_keys = {k for w in ref_words + [p for w in ref_words for p in w.split("-")] for k in _skeletons(w)}
-        ref_numbers = set()
-        for m in list(_NUMBER.finditer(reference)) + list(_PLAIN_NUMBER.finditer(reference)):
-            ref_numbers |= _number_values(m.group(0))
-        # Which drugs stand right before each code in the chunks ("Famotidine (Rec. INN) АТС: А02ВАОЗ").
-        ref_codes = {}
-        for m in _CODE.finditer(context):
-            # 45 characters cover "• Famotidine (Rec. INN) АТС: " but not the previous list item.
-            near = {k for w in _WORD.findall(context[max(0, m.start() - 45): m.start()]) for k in _skeletons(w)}
-            ref_codes.setdefault(_normalize_code(m.group(0)), set()).update(near)
-
-        issues, taken = [], []
-        for m in _CODE.finditer(answer):
-            code = _normalize_code(m.group(0))
-            # The drug a code belongs to stands before it, on the same line and after the previous code
-            # ("Omalizumab (R03DX05), mepolizumab (R03DX09)").
-            start = max(answer.rfind("\n", 0, m.start()) + 1, taken[-1][1] if taken else 0, m.start() - 80)
-            taken.append((m.start(), m.end()))
-            drugs = [w for w in _WORD.findall(answer[start: m.start()]) if self._is_name(w)]
-            if code not in ref_codes:
-                issues.append(Issue("ATC код", m.group(0), "липсва в откъсите", m.start(), m.end()))
-            elif drugs and not _matches(_skeletons(drugs[-1]), ref_codes[code]):
-                issues.append(Issue("ATC код", m.group(0), f"в откъсите не е свързан с {drugs[-1]}", m.start(), m.end()))
-
-        for m in _WORD.finditer(answer):
-            if self._is_name(m.group(0)) and not _matches(_skeletons(m.group(0)), ref_keys):
-                issues.append(Issue("наименование", m.group(0), "не се споменава в откъсите", m.start(), m.end()))
-
-        taken += [(m.start(), m.end()) for m in _ENUMERATOR.finditer(answer)]
-        for m in _NUMBER.finditer(answer):
-            if any(s <= m.start() < e for s, e in taken) or _PAGE_REF.search(answer, 0, m.start()):
-                continue
-            if not (_number_values(m.group(0)) & ref_numbers):
-                # A bare "16" means little to the reader; show it with its unit ("16 mg/kg") when one follows.
-                unit = _UNIT.match(answer, m.end())
-                label = m.group(0) + (unit.group(0) if unit else "")
-                issues.append(Issue("число", label, "липсва в откъсите", m.start(), m.end()))
-        return sorted(issues, key=lambda i: i.start)
+        code_issues, code_spans = self._code_issues(answer, _codes_with_drugs(context))
+        name_issues = self._name_issues(answer, _reference_keys(reference, chunks))
+        number_issues = _number_issues(answer, _reference_numbers(reference), skip=code_spans)
+        return sorted(code_issues + name_issues + number_issues, key=lambda i: i.start)
 
 
 def highlight(answer: str, issues: list[Issue]) -> str:

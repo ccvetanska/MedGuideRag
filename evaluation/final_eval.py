@@ -41,8 +41,9 @@ ANSWER_VERDICTS = {"complete", "partial", "wrong"}
 # Only for "wrong": the error is in what the question asks (core) or in a side detail of a correct answer (minor).
 ERROR_SEVERITIES = {"core", "minor"}
 OUT_OF_SCOPE_VERDICTS = {"declined", "fabricated"}
-LINK_VERDICTS = {"correct", "wrong", "unclear"}
-UNMATCHED_VERDICTS = {"unsupported", "missed_match", "unclear"}
+# Tuples, not sets: the report lists the counts in this order.
+LINK_VERDICTS = ("correct", "wrong", "unclear")
+UNMATCHED_VERDICTS = ("unsupported", "missed_match", "unclear")
 
 # OCR mixes Latin lookalikes into Cyrillic words ("А02ВА02" with Latin A or B); both sides are unified so a
 # quote copied from the PDF matches the extracted text.
@@ -54,6 +55,7 @@ def _words(text: str) -> list[str]:
 
 
 _CHUNK_WORDS, _PAGE_WORDS = {}, {}
+_DOCUMENTS = {c["document"] for c in CHUNKS}
 
 
 def _found_share(quote: list[str], text: list[str]) -> float:
@@ -125,107 +127,146 @@ def _as_list(value) -> list:
     return [] if value is None or value == "" else [value]
 
 
+def _chunk_list(chunks: list[int]) -> str:
+    return ", ".join(f"{CHUNKS[i]['chunk_id']} ({_pages(i)})" for i in chunks)
+
+
+def _quote_texts(item: dict) -> list[str]:
+    return [q for q in _as_list(item.get("quote")) if isinstance(q, str) and q.strip()]
+
+
 def _quotes(item: dict) -> list[tuple[str, int]]:
     """(quote, page) pairs: an answer spread over several places has a list of quotes, with one page for all
     of them or a list of pages of the same length."""
-    quotes = [q for q in _as_list(item.get("quote")) if isinstance(q, str) and q.strip()]
-    pages = _as_list(item.get("page"))
+    quotes, pages = _quote_texts(item), _as_list(item.get("page"))
     return list(zip(quotes, pages * len(quotes) if len(pages) == 1 else pages))
+
+
+def _unfilled(item: dict) -> list[str]:
+    fields = {"question": item.get("question", "").strip(), "page": _as_list(item.get("page")),
+              "quote": _quote_texts(item), "facts": [f for f in item.get("facts", []) if f.strip()]}
+    return [name for name, value in fields.items() if not value]
+
+
+def _pages_valid(item: dict) -> bool:
+    pages = _as_list(item.get("page"))
+    return all(isinstance(p, int) for p in pages) and len(pages) in (1, len(_quote_texts(item)))
+
+
+def _check_quote(label: str, part: dict) -> tuple[list[int], list[int], str | None, list[str]]:
+    """One quote's gold chunks, chunks of other guidelines with the same text, why it fails (None if it does
+    not) and warnings."""
+    page = part["page"]
+    if len(_words(part["quote"])) < QUOTE_MIN_WORDS:
+        return [], [], f"{label} е твърде кратък: копирайте поне {QUOTE_MIN_WORDS} поредни думи", []
+    found, same_text, best, score = find_gold(part)
+    if not found and _lost_in_chunking(part):
+        return [], [], (f"{label} е на стр. {page} в PDF-а, но този текст не е влязъл в откъсите на системата "
+                        "(част от таблиците не е извлечена); изберете друго място"), []
+    if not found:
+        return [], [], (f"{label} не е намерен в {part['document']}; най-близо е {_chunk_list([best])} "
+                        f"с {score:.0%} от думите"), []
+    notes = []
+    if not any(CHUNKS[g]["page_start"] <= page <= CHUNKS[g]["page_end"] for g in found):
+        notes.append(f"внимание: страница {page} не съвпада с откъса на {label}. В page се пише номерът "
+                     "на страницата в PDF четеца (корицата е 1), а не отпечатаният номер")
+    if max(found) - min(found) >= len(found):
+        notes.append(f"внимание: {label} се среща на няколко места в ръководството и всички се броят за "
+                     "верни; ако отговорът е само на едно от тях, копирайте по-дълъг цитат")
+    if len(same_text) > 3:
+        notes.append(f"внимание: {label} се среща в {len(same_text)} откъса от други ръководства (общ "
+                     "текст); изберете място със същинско медицинско съдържание")
+    elif same_text:
+        notes.append(f"същият текст има и в {_chunk_list(same_text)}; и той се брои за верен източник")
+    return found, same_text, None, notes
+
+
+def _check_also_correct(extra: dict, doc_names: dict[str, str]) -> tuple[list[int], str | None, str | None]:
+    """A passage of another guideline that answers the question too, e.g. the same dose written differently in
+    a newer version: its chunks, why it fails (None if it does not) and a note."""
+    document = doc_names.get(extra.get("document", ""), extra.get("document", ""))
+    part = {"document": document, "quote": extra.get("quote", ""), "page": extra.get("page")}
+    if (document not in _DOCUMENTS or not isinstance(part["page"], int)
+            or len(_words(part["quote"])) < QUOTE_MIN_WORDS):
+        return [], ("also_correct изисква document (ръководство, както е в guideline), page (число) и "
+                    f"quote (поне {QUOTE_MIN_WORDS} думи)"), None
+    found, same_text, best, score = find_gold(part)
+    if not found:
+        return [], (f"цитатът в also_correct не е намерен в {document}; най-близо е {_chunk_list([best])} "
+                    f"с {score:.0%} от думите"), None
+    return found + same_text, None, f"верен е и {_chunk_list(found)} (also_correct)"
+
+
+def _check_sources(item: dict, doc_names: dict[str, str]) -> tuple[list[int], list[int], list[str], list[str]]:
+    """Gold chunks, equally correct chunks of other guidelines, failures and warnings of an in-scope question."""
+    gold, copies, failed, notes = [], [], [], []
+    quotes = _quotes(item)
+    for n, (quote, page) in enumerate(quotes, 1):
+        label = f"цитат {n}" if len(quotes) > 1 else "цитатът"
+        part = {"document": item["document"], "quote": quote, "page": page}
+        found, same_text, failure, warnings = _check_quote(label, part)
+        if failure:
+            failed.append(failure)
+            continue
+        notes += warnings
+        gold += [g for g in found if g not in gold]
+        copies += [g for g in same_text if g not in copies]
+    for extra in item.get("also_correct", []):
+        found, failure, note = _check_also_correct(extra, doc_names)
+        if failure:
+            failed.append(failure)
+            continue
+        notes.append(note)
+        copies += [g for g in found if g not in copies]
+    return gold, copies, failed, notes
+
+
+def _overlap_warnings(item: dict, gold: list[int], used: dict[int, str]) -> list[str]:
+    """Gold chunks already used by the development set or by an earlier question, and an unusual fact count."""
+    warnings = []
+    if set(GOLD) & set(gold):
+        warnings.append("същият откъс е използван в набора за разработка; изберете друго място")
+    earlier = sorted({used[g] for g in gold if g in used})
+    if earlier:
+        warnings.append(f"същият откъс като при {', '.join(earlier)}; въпросите трябва да са за "
+                        "различни места в ръководството")
+    facts = [f for f in item["facts"] if f.strip()]
+    if not 2 <= len(facts) <= 4:
+        count = "1 ключов факт" if len(facts) == 1 else f"{len(facts)} ключови факта"
+        warnings.append(f"{count}; препоръчват се 2-4")
+    return warnings
 
 
 def inspect(questions: dict) -> tuple[list[str], int, dict[str, list[int]]]:
     """Report lines, number of problems that block the run, and the gold chunks of every complete question."""
-    lines, problems, gold_of = [], 0, {}
-    dev_gold, used, empty = set(GOLD), {}, []
+    lines, problems, gold_of, empty = [], 0, {}, []
+    used = {}  # gold chunk -> the question that has it
     doc_names = {i["guideline"]: i["document"] for i in questions["in_scope"]}
-    documents = {c["document"] for c in CHUNKS}
     for item in questions["in_scope"]:
-        quotes = [q for q in _as_list(item.get("quote")) if isinstance(q, str) and q.strip()]
-        pages = _as_list(item.get("page"))
-        missing = [f for f, v in (("question", item.get("question", "").strip()), ("page", pages), ("quote", quotes))
-                   if not v]
-        if not any(f.strip() for f in item.get("facts", [])):
-            missing.append("facts")
-        if len(missing) == 4:
-            empty.append(item["id"])
+        qid, unfilled = item["id"], _unfilled(item)
+        if len(unfilled) == 4:
+            empty.append(qid)
             problems += 1
             continue
-        if missing:
-            lines.append(f"{item['id']} не е попълнен: {', '.join(missing)}")
+        if unfilled:
+            lines.append(f"{qid} не е попълнен: {', '.join(unfilled)}")
             problems += 1
             continue
-        if not all(isinstance(p, int) for p in pages) or len(pages) not in (1, len(quotes)):
-            lines.append(f"{item['id']} page трябва да е число без кавички, а при няколко цитата от различни страници "
-                         f"– списък с по една страница за всеки цитат, напр. [85, 86]")
+        if not _pages_valid(item):
+            lines.append(f"{qid} page трябва да е число без кавички, а при няколко цитата от различни страници "
+                         "– списък с по една страница за всеки цитат, напр. [85, 86]")
             problems += 1
             continue
-        gold, copies, failed, notes = [], [], [], []
-        for n, (quote, page) in enumerate(_quotes(item), 1):
-            label = f"цитат {n}" if len(quotes) > 1 else "цитатът"
-            part = {"document": item["document"], "quote": quote, "page": page}
-            if len(_words(quote)) < QUOTE_MIN_WORDS:
-                failed.append(f"{label} е твърде кратък: копирайте поне {QUOTE_MIN_WORDS} поредни думи")
-                continue
-            found, same_text, best, score = find_gold(part)
-            if not found and _lost_in_chunking(part):
-                failed.append(f"{label} е на стр. {page} в PDF-а, но този текст не е влязъл в откъсите на системата "
-                              "(част от таблиците не е извлечена); изберете друго място")
-                continue
-            if not found:
-                failed.append(f"{label} не е намерен в {item['document']}; най-близо е "
-                              f"{CHUNKS[best]['chunk_id']} ({_pages(best)}) с {score:.0%} от думите")
-                continue
-            if not any(CHUNKS[g]["page_start"] <= page <= CHUNKS[g]["page_end"] for g in found):
-                notes.append(f"внимание: страница {page} не съвпада с откъса на {label}. В page се пише номерът "
-                             "на страницата в PDF четеца (корицата е 1), а не отпечатаният номер")
-            if max(found) - min(found) >= len(found):
-                notes.append(f"внимание: {label} се среща на няколко места в ръководството и всички се броят за "
-                             "верни; ако отговорът е само на едно от тях, копирайте по-дълъг цитат")
-            if len(same_text) > 3:
-                notes.append(f"внимание: {label} се среща в {len(same_text)} откъса от други ръководства (общ "
-                             "текст); изберете място със същинско медицинско съдържание")
-            elif same_text:
-                notes.append("същият текст има и в " + ", ".join(f"{CHUNKS[g]['chunk_id']} ({_pages(g)})"
-                                                                 for g in same_text)
-                             + "; и той се брои за верен източник")
-            gold += [g for g in found if g not in gold]
-            copies += [g for g in same_text if g not in copies]
-        # A passage of another guideline that answers the question too, e.g. the same dose written differently in
-        # a newer version: it counts as correct for retrieval, and the review shows which one the system used.
-        for extra in item.get("also_correct", []):
-            document = doc_names.get(extra.get("document", ""), extra.get("document", ""))
-            part = {"document": document, "quote": extra.get("quote", ""), "page": extra.get("page")}
-            if (document not in documents or not isinstance(part["page"], int)
-                    or len(_words(part["quote"])) < QUOTE_MIN_WORDS):
-                failed.append("also_correct изисква document (ръководство, както е в guideline), page (число) и "
-                              f"quote (поне {QUOTE_MIN_WORDS} думи)")
-                continue
-            found, same_text, best, score = find_gold(part)
-            if not found:
-                failed.append(f"цитатът в also_correct не е намерен в {document}; най-близо е "
-                              f"{CHUNKS[best]['chunk_id']} ({_pages(best)}) с {score:.0%} от думите")
-                continue
-            notes.append("верен е и " + ", ".join(f"{CHUNKS[g]['chunk_id']} ({_pages(g)})" for g in found)
-                         + " (also_correct)")
-            copies += [g for g in found + same_text if g not in copies]
+        gold, copies, failed, notes = _check_sources(item, doc_names)
         if failed:
-            lines += [f"{item['id']} {f}" for f in failed]
+            lines += [f"{qid} {f}" for f in failed]
             problems += 1
             continue
-        gold_of[item["id"]] = gold + [g for g in copies if g not in gold]
-        lines.append(f"{item['id']} наред: " + ", ".join(f"{CHUNKS[g]['chunk_id']} ({_pages(g)})" for g in gold))
+        gold_of[qid] = gold + [g for g in copies if g not in gold]
+        lines.append(f"{qid} наред: {_chunk_list(gold)}")
         lines += [f"    {n}" for n in dict.fromkeys(notes)]
-        if dev_gold & set(gold):
-            lines.append("    внимание: същият откъс е използван в набора за разработка; изберете друго място")
-        earlier = sorted({used[g] for g in gold if g in used})
-        if earlier:
-            lines.append(f"    внимание: същият откъс като при {', '.join(earlier)}; въпросите трябва да са за "
-                         "различни места в ръководството")
-        used.update({g: item["id"] for g in gold})
-        facts = [f for f in item["facts"] if f.strip()]
-        if not 2 <= len(facts) <= 4:
-            count = "1 ключов факт" if len(facts) == 1 else f"{len(facts)} ключови факта"
-            lines.append(f"    внимание: {count}; препоръчват се 2-4")
+        lines += [f"    внимание: {w}" for w in _overlap_warnings(item, gold, used)]
+        used.update({g: qid for g in gold})
     # A missing detail names its guideline by file or by the guideline field of the in-scope questions.
     known = {i["document"] for i in questions["in_scope"]} | {i["guideline"] for i in questions["in_scope"]}
     for item in questions["out_of_scope"]:
@@ -252,7 +293,8 @@ def check(args):
     lines, problems, _ = inspect(questions)
     print("\n".join(lines))
     total = len(questions["in_scope"]) + len(questions["out_of_scope"])
-    print(f"\nГотови: {total - problems} от {total}." + ("" if problems else " Може да се пусне run (със спряно приложение)."))
+    ready = f"Готови: {total - problems} от {total}."
+    print(f"\n{ready}" + ("" if problems else " Може да се пусне run (със спряно приложение)."))
 
 
 def retrieve(rows: list[dict]):
@@ -540,22 +582,109 @@ def _share(n: int, total: int) -> str:
     return f"{n}/{total} ({n / total:.0%}, 95% CI {low:.0%}-{high:.0%})"
 
 
-def report(args):
-    out_dir = Path(args.out_dir)
-    rows = json.load(open(out_dir / ANSWERS_NAME, encoding="utf-8"))
-    # Gold chunks from the current question file, so a passage accepted as correct after reviewing the shown
-    # chunks (also_correct) counts without generating the answers again.
-    _, _, gold_of = inspect(load_questions(Path(args.questions)))
+def _refresh_gold(rows: list[dict], questions_path: Path):
+    """Gold chunks from the current question file, so a passage accepted as correct after reviewing the shown
+    chunks (also_correct) counts without generating the answers again."""
+    _, _, gold_of = inspect(load_questions(questions_path))
     changed = [r["id"] for r in rows if r["id"] in gold_of and set(gold_of[r["id"]]) != set(r.get("gold", []))]
     for r in rows:
         r["gold"] = gold_of.get(r["id"], r.get("gold", []))
     if changed:
-        print(f"Верните откъси са взети от {Path(args.questions).name}; променени спрямо пускането: {', '.join(changed)}\n")
+        print(f"Верните откъси са взети от {questions_path.name}; променени спрямо пускането: {', '.join(changed)}\n")
+
+
+def _load_labels(path: Path) -> dict:
     try:
-        labels = json.load(open(out_dir / LABELS_NAME, encoding="utf-8"))
+        labels = json.load(open(path, encoding="utf-8"))
     except json.JSONDecodeError as e:
-        sys.exit(f"{LABELS_NAME}: грешка в JSON на ред {e.lineno}, позиция {e.colno}: {e.msg}.")
-    labels = {k: v for k, v in labels.items() if not k.startswith("_")}
+        sys.exit(f"{path.name}: грешка в JSON на ред {e.lineno}, позиция {e.colno}: {e.msg}.")
+    return {k: v for k, v in labels.items() if not k.startswith("_")}
+
+
+def _found_within(ranks: list[int | None], k: int) -> list[bool]:
+    return [p is not None and p < k for p in ranks]
+
+
+def _reciprocal(ranks: list[int | None]) -> list[float]:
+    return [1 / (p + 1) if p is not None else 0.0 for p in ranks]
+
+
+def _report_retrieval(in_scope: list[dict], result: dict) -> dict[str, list[int | None]]:
+    """Recall and MRR of every method, strict and with neighbours; returns the strict gold ranks per method."""
+    print(f"Извличане ({len(in_scope)} въпроса в обхвата; строго / с откъсите съседи):")
+    print(f"{'метод':16} | R@1   R@5   MRR  | R@1   R@5   MRR")
+    result["retrieval"], strict_ranks = {}, {}
+    for method in in_scope[0]["rankings"]:
+        m = {}
+        for mode, lenient in (("strict", False), ("lenient", True)):
+            ranks = [_hit(r["rankings"][method], r["gold"], 10, lenient) for r in in_scope]
+            n = len(ranks)
+            m[mode] = {"R@1": sum(_found_within(ranks, 1)) / n, "R@5": sum(_found_within(ranks, 5)) / n,
+                       "MRR": sum(_reciprocal(ranks)) / n}
+            if not lenient:
+                strict_ranks[method] = ranks
+        result["retrieval"][method] = m
+        s, l = m["strict"], m["lenient"]
+        print(f"{method:16} | {s['R@1']:.2f}  {s['R@5']:.2f}  {s['MRR']:.2f} | "
+              f"{l['R@1']:.2f}  {l['R@5']:.2f}  {l['MRR']:.2f}")
+    return strict_ranks
+
+
+def _report_significance(strict_ranks: dict[str, list[int | None]], result: dict):
+    print("\nЗначимост (строго; при R@1 и R@5: случаи, в които само A / само B намира верния откъс, точен тест "
+          "на Макнемар; при MRR: рандомизационен тест):")
+    result["significance"] = {}
+    for a, b in [(a, b) for a, b in COMPARISONS if a in strict_ranks and b in strict_ranks]:
+        ra, rb = strict_ranks[a], strict_ranks[b]
+        test = {f"R@{k}": mcnemar(_found_within(ra, k), _found_within(rb, k)) for k in (1, 5)}
+        test["MRR"] = randomization(_reciprocal(ra), _reciprocal(rb))
+        print(f"  A = {a:7} B = {b:15} | R@1 {test['R@1'][0]}/{test['R@1'][1]}, p = {test['R@1'][2]:.3f} | "
+              f"R@5 {test['R@5'][0]}/{test['R@5'][1]}, p = {test['R@5'][2]:.3f} | MRR p = {test['MRR']:.3f}")
+        result["significance"][f"{a} vs {b}"] = test
+
+
+def _outcome(row: dict, labels: dict) -> str:
+    if not row["chunk_ids"]:
+        return "отказ (праг)"
+    if _refused(row):
+        return f"отказ ({row['coverage']['reason']}: {', '.join(row['coverage']['terms'])})"
+    return labels[row["id"]].get("answer_verdict") or "unlabelled"
+
+
+def _report_refusals(rows: list[dict], in_scope: list[dict], out_scope: list[dict], labels: dict, result: dict):
+    false_refusals = sum(_refused(r) for r in in_scope)
+    refused_out = sum(_refused(r) for r in out_scope)
+    by_threshold = sum(not r["chunk_ids"] for r in out_scope)
+    print(f"\nОткази: погрешни при въпросите в обхвата {false_refusals}/{len(in_scope)}, "
+          f"правилни при въпросите извън обхвата {refused_out}/{len(out_scope)} "
+          f"(праг {by_threshold}, проверка на ключовите понятия {refused_out - by_threshold})")
+    out_verdicts = {r["id"]: _outcome(r, labels) for r in out_scope}
+    for r in out_scope:
+        print(f"  {r['id']} ({r['kind']}): най-висока оценка {r['rerank_scores'][0]:.3f} -> {out_verdicts[r['id']]}")
+    for r in in_scope:
+        if _refused(r):
+            print(f"  погрешен отказ {r['id']}: {_outcome(r, labels)}, най-висока оценка {r['rerank_scores'][0]:.3f}")
+    result["refusals"] = {"false_in_scope": false_refusals, "correct_out_of_scope": refused_out,
+                          "out_of_scope_by_threshold": by_threshold, "out_of_scope": out_verdicts,
+                          "top_scores": {r["id"]: r["rerank_scores"][0] for r in rows}}
+
+
+def _report_grounding_auto(rows: list[dict], result: dict):
+    answered = [r for r in rows if r.get("answer") is not None]
+    flagged = sum(bool(r["grounding_issues"]) for r in answered)
+    flags = sum(len(r["grounding_issues"]) for r in answered)
+    print(f"\nПроверка за неподкрепени подробности: сигнали в {flagged} от {len(answered)} отговора, общо {flags}")
+    result["grounding_auto"] = {"answers": len(answered), "flagged_answers": flagged, "flags": flags}
+    loops = sum(r["answer"].endswith("[…]") for r in answered)
+    print(f"Прекъснати отговори (зацикляне): {loops}")
+    result["cut_answers"] = loops
+
+
+def report(args):
+    out_dir = Path(args.out_dir)
+    rows = json.load(open(out_dir / ANSWERS_NAME, encoding="utf-8"))
+    _refresh_gold(rows, Path(args.questions))
+    labels = _load_labels(out_dir / LABELS_NAME)
     missing = _unlabelled(labels)
     # Retrieval, refusals and timings need no verdicts; the answer-quality parts wait until all are filled in.
     labelled = not missing
@@ -566,79 +695,22 @@ def report(args):
     out_scope = [r for r in rows if r["id"].startswith("O")]
     result = {"questions": {"in_scope": len(in_scope), "out_of_scope": len(out_scope)}}
 
-    print(f"Извличане ({len(in_scope)} въпроса в обхвата; строго / с откъсите съседи):")
-    print(f"{'метод':16} | R@1   R@5   MRR  | R@1   R@5   MRR")
-    retrieval, strict_ranks = {}, {}
-    for method in in_scope[0]["rankings"]:
-        m = {}
-        for mode, lenient in (("strict", False), ("lenient", True)):
-            ranks = [_hit(r["rankings"][method], r["gold"], 10, lenient) for r in in_scope]
-            m[mode] = {"R@1": sum(p is not None and p < 1 for p in ranks) / len(ranks),
-                       "R@5": sum(p is not None and p < 5 for p in ranks) / len(ranks),
-                       "MRR": sum(1 / (p + 1) for p in ranks if p is not None) / len(ranks)}
-            if not lenient:
-                strict_ranks[method] = ranks
-        retrieval[method] = m
-        s, l = m["strict"], m["lenient"]
-        print(f"{method:16} | {s['R@1']:.2f}  {s['R@5']:.2f}  {s['MRR']:.2f} | {l['R@1']:.2f}  {l['R@5']:.2f}  {l['MRR']:.2f}")
-    result["retrieval"] = retrieval
-
-    print("\nЗначимост (строго; при R@1 и R@5: случаи, в които само A / само B намира верния откъс, точен тест "
-          "на Макнемар; при MRR: рандомизационен тест):")
-    result["significance"] = {}
-    for a, b in [(a, b) for a, b in COMPARISONS if a in strict_ranks and b in strict_ranks]:
-        ra, rb = strict_ranks[a], strict_ranks[b]
-        test = {}
-        for k in (1, 5):
-            test[f"R@{k}"] = mcnemar([p is not None and p < k for p in ra], [p is not None and p < k for p in rb])
-        test["MRR"] = randomization([1 / (p + 1) if p is not None else 0.0 for p in ra],
-                                    [1 / (p + 1) if p is not None else 0.0 for p in rb])
-        print(f"  A = {a:7} B = {b:15} | R@1 {test['R@1'][0]}/{test['R@1'][1]}, p = {test['R@1'][2]:.3f} | "
-              f"R@5 {test['R@5'][0]}/{test['R@5'][1]}, p = {test['R@5'][2]:.3f} | MRR p = {test['MRR']:.3f}")
-        result["significance"][f"{a} vs {b}"] = test
-
+    strict_ranks = _report_retrieval(in_scope, result)
+    _report_significance(strict_ranks, result)
     shown = sum(bool(set(r["gold"]) & {CHUNK_INDEX[c] for c in r["chunk_ids"]}) for r in in_scope)
     print(f"\nОткъсът с отговора е показан на модела: {_share(shown, len(in_scope))}")
     result["gold_shown"] = shown
+    _report_refusals(rows, in_scope, out_scope, labels, result)
+    _report_grounding_auto(rows, result)
+    if labelled:
+        _report_answers(in_scope, labels, result)
+        _report_grounding_verdicts(labels, result)
+    _report_links_and_time(rows, in_scope, labels, result, labelled)
+    _save_report(args, result)
 
-    false_refusals = sum(_refused(r) for r in in_scope)
-    refused_out = sum(_refused(r) for r in out_scope)
-    by_threshold = sum(not r["chunk_ids"] for r in out_scope)
-    print(f"\nОткази: погрешни при въпросите в обхвата {false_refusals}/{len(in_scope)}, "
-          f"правилни при въпросите извън обхвата {refused_out}/{len(out_scope)} "
-          f"(праг {by_threshold}, проверка на ключовите понятия {refused_out - by_threshold})")
 
-    def how(r):
-        if not r["chunk_ids"]:
-            return "отказ (праг)"
-        if _refused(r):
-            return f"отказ ({r['coverage']['reason']}: {', '.join(r['coverage']['terms'])})"
-        return labels[r["id"]].get("answer_verdict") or "unlabelled"
-
-    out_verdicts = {r["id"]: how(r) for r in out_scope}
-    for r in out_scope:
-        print(f"  {r['id']} ({r['kind']}): най-висока оценка {r['rerank_scores'][0]:.3f} -> {out_verdicts[r['id']]}")
-    for r in in_scope:
-        if _refused(r):
-            print(f"  погрешен отказ {r['id']}: {how(r)}, най-висока оценка {r['rerank_scores'][0]:.3f}")
-    result["refusals"] = {"false_in_scope": false_refusals, "correct_out_of_scope": refused_out,
-                          "out_of_scope_by_threshold": by_threshold, "out_of_scope": out_verdicts,
-                          "top_scores": {r["id"]: r["rerank_scores"][0] for r in rows}}
-
-    answered_rows = [r for r in rows if r.get("answer") is not None]
-    flagged = [r for r in answered_rows if r["grounding_issues"]]
-    print(f"\nПроверка за неподкрепени подробности: сигнали в {len(flagged)} от {len(answered_rows)} отговора, "
-          f"общо {sum(len(r['grounding_issues']) for r in answered_rows)}")
-    result["grounding_auto"] = {"answers": len(answered_rows), "flagged_answers": len(flagged),
-                                "flags": sum(len(r["grounding_issues"]) for r in answered_rows)}
-    loops = sum(r["answer"].endswith("[…]") for r in answered_rows)
-    print(f"Прекъснати отговори (зацикляне): {loops}")
-    result["cut_answers"] = loops
-    if not labelled:
-        _report_links_and_time(rows, in_scope, labels, result, labelled)
-        _save_report(args, result)
-        return
-
+def _report_answers(in_scope: list[dict], labels: dict, result: dict):
+    """Verdicts on the in-scope answers, strict and lenient, and the share of key facts they contain."""
     verdicts = [labels[r["id"]]["answer_verdict"] for r in in_scope]
     counts = {v: verdicts.count(v) for v in ("complete", "partial", "wrong", "refused")}
     severities = [labels[r["id"]]["error_severity"] for r in in_scope if labels[r["id"]]["answer_verdict"] == "wrong"]
@@ -660,6 +732,8 @@ def report(args):
     result["correctness"] = {"no_error": counts["complete"] + counts["partial"], "minor": minor, "core": core}
     result["facts"] = {"present": sum(facts), "total": len(facts)}
 
+
+def _report_grounding_verdicts(labels: dict, result: dict):
     flags = [f["real_error"] for e in labels.values() for f in e.get("flags", [])]
     missed = sum(len(e.get("missed_errors", [])) for e in labels.values())
     answered = sum("flags" in e for e in labels.values())
@@ -668,8 +742,6 @@ def report(args):
     print(f"Пропуснати от проверката грешки: {missed}; дял на откритите сред всички забелязани: "
           f"{_share(sum(flags), sum(flags) + missed)}")
     result["grounding"] = {"answers": answered, "flags": len(flags), "real": sum(flags), "missed": missed}
-    _report_links_and_time(rows, in_scope, labels, result, labelled)
-    _save_report(args, result)
 
 
 def _report_links_and_time(rows: list[dict], in_scope: list[dict], labels: dict, result: dict, labelled: bool):

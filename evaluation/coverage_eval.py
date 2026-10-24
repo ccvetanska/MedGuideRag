@@ -1,10 +1,10 @@
 """Effect of the key-concept check (generation/coverage.py) on stored contexts, without generating
-(thesis section "Подобряване на резултатите: проверка дали ключовите понятия от въпроса ги има в откъсите").
+(thesis section "Подобряване на резултатите -- проверка дали ключовите понятия от въпроса се срещат в откъсите").
 
     python -m evaluation.coverage_eval
 
 The check only decides whether to generate, so it is evaluated on the chunks the system already retrieved:
-the 24 development questions (results/thesis/dev_contexts_hybrid.json) and the 70 questions of the final
+the 24 development questions (results/thesis/dev_contexts_hybrid.json) and the 69 questions of the final
 evaluation run before the check existed (results/thesis/final_before_coverage/final_answers.json). Prints the
 refusals per set, McNemar's test for the out-of-scope questions and the sensitivity to COVERAGE_MAX_CHUNKS.
 """

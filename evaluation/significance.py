@@ -94,13 +94,16 @@ def main():
         found_a = [bool(re.search(f, answer[(a, q)])) for q in FACTS for f in FACTS[q]]
         found_b = [bool(re.search(f, answer[(b, q)])) for q in FACTS for f in FACTS[q]]
         only_a, only_b, p = mcnemar(found_a, found_b)
-        print(f"  {label:42} {sum(found_a)} -> {sum(found_b)} of {len(found_a)} | only A {only_a}, only B {only_b} | p {p:.3f}")
+        print(f"  {label:42} {sum(found_a)} -> {sum(found_b)} of {len(found_a)} | "
+              f"only A {only_a}, only B {only_b} | p {p:.3f}")
 
     print("\nmanual verdicts, Wilson 95% intervals:")
     flags = load("thesis/grounding_flags_labelled.json")
     links = [x for x in load("thesis/attribution_links_labelled.json") if x["chunk_sentence"] is not None]
-    for label, k, n in [("grounding flags that are real errors", sum(f["real_error"] for f in flags), len(flags)),
-                        ("attribution links pointing to the right place", sum(x["verdict"] == "correct" for x in links), len(links))]:
+    real_flags = sum(f["real_error"] for f in flags)
+    correct_links = sum(x["verdict"] == "correct" for x in links)
+    for label, k, n in [("grounding flags that are real errors", real_flags, len(flags)),
+                        ("attribution links pointing to the right place", correct_links, len(links))]:
         low, high = wilson(k, n)
         print(f"  {label:46} {k}/{n} = {k / n:.0%}  [{low:.0%}, {high:.0%}]")
 

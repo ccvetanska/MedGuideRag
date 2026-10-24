@@ -50,10 +50,13 @@ def main():
         del model
         torch.cuda.empty_cache()
 
+    def vectors(index_dir: Path, count: int):
+        return faiss.read_index(str(index_dir / model_slug("BAAI/bge-m3") / "chunks.index")).reconstruct_n(0, count)
+
     with tempfile.TemporaryDirectory() as tmp:
         stats = build_index("BAAI/bge-m3", index_dir=Path(tmp))
-        new = faiss.read_index(str(Path(tmp) / model_slug("BAAI/bge-m3") / "chunks.index")).reconstruct_n(0, stats["num_chunks"])
-    old = faiss.read_index(str(INDEX_DIR / model_slug("BAAI/bge-m3") / "chunks.index")).reconstruct_n(0, stats["num_chunks"])
+        new = vectors(Path(tmp), stats["num_chunks"])
+    old = vectors(INDEX_DIR, stats["num_chunks"])
     cos = (old * new).sum(1)
     print(f"bge-m3 index built on the GPU in {stats['embedding_seconds']:.0f} s | cosine to the CPU-built vectors: "
           f"min {cos.min():.5f}, mean {cos.mean():.5f}")

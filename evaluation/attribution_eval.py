@@ -38,7 +38,8 @@ def main():
             start, end = link.span
             out.append({"question": row["question"], "sentence": link.sentence,
                         "chunk_sentence": normalized_text(chunks[link.chunk])[start:end], "score": round(link.score, 2)})
-        out += [{"question": row["question"], "sentence": s, "chunk_sentence": None, "score": None} for s in result.unsupported]
+        out += [{"question": row["question"], "sentence": s, "chunk_sentence": None, "score": None}
+                for s in result.unsupported]
 
     for n, x in enumerate(out):
         if x["chunk_sentence"] is None:

@@ -7,7 +7,7 @@ from typing import Callable
 
 import numpy as np
 
-from medguiderag.generation.grounding import _NUMBER, _WORD, _number_values, _skeletons
+from medguiderag.generation.grounding import NUMBER, WORD, number_values, skeletons
 
 # A guideline sentence ends with ".", "!", "?" or ";" before a capital, a digit, a bullet or a dash; a bullet
 # also starts one. "i.v. bolus" or "5 mg. дневно" stay whole because a lowercase word follows.
@@ -18,6 +18,7 @@ _ABBREVIATION = re.compile(r"\b(?:стр|напр|вкл|табл|др|мин|г
 _MARKDOWN = re.compile(r"\*\*|__|`|^#+\s*|^\s*(?:[-*•]|\d+[.)])\s+", re.M)
 # An answer sentence may join facts from several chunk sentences; link up to this many.
 _MAX_LINKS = 3
+# The further links must score within this margin of the best one.
 _SECONDARY_MARGIN = 0.08
 
 
@@ -59,8 +60,26 @@ def _spans(text: str, breaks: re.Pattern) -> list[tuple[int, int]]:
 
 def _tokens(text: str) -> list[frozenset[str]]:
     """Content tokens as sets of spelling-independent keys: words of 5+ letters and numbers."""
-    tokens = [frozenset(_skeletons(w)) for w in _WORD.findall(text) if len(w) >= 5]
-    return tokens + [frozenset(_number_values(m.group(0))) for m in _NUMBER.finditer(text)]
+    tokens = [frozenset(skeletons(w)) for w in WORD.findall(text) if len(w) >= 5]
+    return tokens + [frozenset(number_values(m.group(0))) for m in NUMBER.finditer(text)]
+
+
+def _lexical_scores(sentences: list[str], unit_texts: list[str]) -> np.ndarray:
+    """Share of each answer sentence's content tokens found in each chunk sentence, every token weighted by its
+    rarity among the chunk sentences, so "лечение" counts little and "ondansetron" much."""
+    unit_keys = [set().union(*_tokens(t)) for t in unit_texts]
+    chunk_sentences_with = Counter(k for keys in unit_keys for k in keys)
+    n = len(unit_texts)
+    scores = np.zeros((len(sentences), n))
+    for a, sentence in enumerate(sentences):
+        tokens = _tokens(sentence)
+        weights = [math.log((n + 1) / (1 + min(chunk_sentences_with[k] for k in tok))) + 1 for tok in tokens]
+        total = sum(weights)
+        if not total:
+            continue
+        for u, keys in enumerate(unit_keys):
+            scores[a, u] = sum(w for tok, w in zip(tokens, weights) if tok & keys) / total
+    return scores
 
 
 class Attributor:
@@ -75,38 +94,23 @@ class Attributor:
         """Answer sentences, chunk sentences (chunk index, span) and their semantic and lexical similarities."""
         sentences = [_MARKDOWN.sub("", answer[s:e]).strip() for s, e in _spans(answer, _ANSWER_BREAK)]
         # "Лечението включва:" only introduces a list; it states nothing to find in the chunks.
-        sentences = [s for s in sentences if len(_WORD.findall(s)) >= 3 and not s.endswith(":")]
+        sentences = [s for s in sentences if len(WORD.findall(s)) >= 3 and not s.endswith(":")]
         texts = [normalized_text(c) for c in chunks]
         units = [(i, span) for i, t in enumerate(texts) for span in _spans(t, _CHUNK_BREAK)]
         if not sentences or not units:
-            return sentences, units, np.zeros((len(sentences), len(units))), np.zeros((len(sentences), len(units)))
+            empty = np.zeros((len(sentences), len(units)))
+            return sentences, units, empty, empty
         unit_texts = [texts[i][s:e] for i, (s, e) in units]
-
         vectors = self.embed(sentences + unit_texts)
         semantic = vectors[: len(sentences)] @ vectors[len(sentences):].T
-
-        # Lexical coverage: share of an answer sentence's content tokens found in the chunk sentence, each
-        # token weighted by its rarity among the chunk sentences, so "лечение" counts little and "ondansetron" much.
-        unit_keys = [set().union(*_tokens(t)) if _tokens(t) else set() for t in unit_texts]
-        df = Counter(k for keys in unit_keys for k in keys)
-        n = len(units)
-        lexical = np.zeros((len(sentences), n))
-        for a, sentence in enumerate(sentences):
-            tokens = _tokens(sentence)
-            weights = [math.log((n + 1) / (1 + min(df[k] for k in tok))) + 1 for tok in tokens]
-            total = sum(weights)
-            if not total:
-                continue
-            for u, keys in enumerate(unit_keys):
-                lexical[a, u] = sum(w for tok, w in zip(tokens, weights) if tok & keys) / total
-        return sentences, units, semantic, lexical
+        return sentences, units, semantic, _lexical_scores(sentences, unit_texts)
 
     def attribute(self, answer: str, chunks: list[dict]) -> Attribution:
         sentences, units, semantic, lexical = self.score_matrix(answer, chunks)
         links, unsupported = [], []
         for a, sentence in enumerate(sentences):
-            combined = (semantic[a] + lexical[a]) / 2 if len(units) else np.array([])
-            if not len(combined) or combined.max() < self.threshold:
+            combined = (semantic[a] + lexical[a]) / 2
+            if not combined.size or combined.max() < self.threshold:
                 unsupported.append(sentence)
                 continue
             best = combined.max()
