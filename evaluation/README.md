@@ -16,6 +16,7 @@ export OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 TOKENIZERS_PAR
 | Скрипт | Какво възпроизвежда | Време* | Нужно |
 |---|---|---|---|
 | `retrieval_eval` | таблица „Сравнение на методите за извличане“ (с `--ollama`: и qwen3-embedding, embeddinggemma) | ~1 мин | индексите в `data/index`; за `--ollama` – моделите в Ollama |
+| `stemming_eval` | обработката на думите при BM25 (раздел 4.3, „Лексикално търсене“, и раздел 4.7, „Извличане“): отрязване до 5, 6 и 7 знака, BulStem и цели думи, самостоятелно и в сливането с bge-m3, върху двата набора | ~1 мин | само архивираните класирания на bge-m3; `bulstem` |
 | `calibrate_threshold` | оценките на модела за повторно класиране и прагът 0.1 (раздел 4.3, „Праг за отказ“) | ~1 мин | |
 | `input_coverage` | таблица „Обхват на представянето на откъсите“ | секунди | токенизаторите в кеша на Hugging Face |
 | `grounding_eval` | оценката на проверката за неподкрепени подробности (раздел 4.4: 132 отговора, 44 сигнала) | секунди | |
@@ -45,6 +46,7 @@ export OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 TOKENIZERS_PAR
 Експериментите с подсказката, с представянето на откъсите и с параметрите на генерирането (раздели 4.2–4.4) са проведени с междинни версии на системата. Резултатите им са запазени тук (`iteration1_prompt_variants.json`, `representation_variants.json`, `generation_*.json`), но скриптовете, с които са получени, не са част от проекта.
 
 - `retrieval_rankings*.json`, `representation_variants.json`, `rerank_rankings_cpu.json` – класиранията (индекси в реда на `chunks.jsonl`).
+- `stemming_rankings.json` – класиранията на BM25 при различната обработка на думите, самостоятелно и в сливането с bge-m3, за двата набора.
 - `iteration1_prompt_variants.json` – отговорите от първата итерация. За хиперемезис са от повторението с правилния термин „гравидарум“.
 - `dev_contexts_hybrid.json` – откъсите от хибридното извличане за 24-те въпроса.
 - `generation_penalty_sweep.json`, `generation_loop_check.json` – отговорите при различно наказание за повторение (2.6B).
