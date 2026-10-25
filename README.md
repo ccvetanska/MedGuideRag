@@ -70,5 +70,3 @@ MedGuideRag добавя компонентите, необходими за п�
 ```
 .venv/Scripts/python.exe -m streamlit run src/medguiderag/app/ui.py
 ```
-
-Възпроизвеждане на оценката: виж `evaluation/README.md`.

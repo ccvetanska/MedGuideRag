@@ -40,7 +40,8 @@ plt.rcParams.update({
     "ytick.labelcolor": INK,
     "axes.spines.top": False,
     "axes.spines.right": False,
-    "pdf.fonttype": 42,  # embed TrueType, so the text stays selectable and searchable in the thesis PDF
+    "pdf.fonttype":
+    42,  # embed TrueType, so the text stays selectable and searchable in the thesis PDF
 })
 
 
@@ -51,7 +52,11 @@ def swarm(xs: list[float], width: float, step: float) -> list[float]:
         k = 0
         while True:
             candidates = [0.0] if k == 0 else [k * step, -k * step]
-            free = [o for o in candidates if all(abs(x - px) >= width or abs(o - po) >= step for px, po in placed)]
+            free = [
+                o for o in candidates if all(
+                    abs(x - px) >= width or abs(o - po) >= step
+                    for px, po in placed)
+            ]
             if free:
                 placed.append((x, free[0]))
                 offsets.append(free[0])
@@ -67,14 +72,21 @@ def logit(p: float) -> float:
 def threshold_calibration():
     data = load("thesis/threshold_calibration.json")
     rows = [
-        ("Въпроси извън\nобхвата (10)", [o["top5"][0] for o in data["out_of_scope"]], ORANGE),
-        ("Въпроси от набора\nза разработка (24)", [d["top5"][0][1] for d in data["development"]], BLUE),
+        ("Въпроси извън\nобхвата (10)",
+         [o["top5"][0] for o in data["out_of_scope"]], ORANGE),
+        ("Въпроси от набора\nза разработка (24)",
+         [d["top5"][0][1] for d in data["development"]], BLUE),
     ]
     fig, ax = plt.subplots(figsize=(TEXT_WIDTH, 2.1))
     for y, (_, scores, color) in enumerate(rows):
         scores = sorted(scores)
         offsets = swarm([logit(s) for s in scores], width=0.24, step=0.11)
-        ax.scatter(scores, [y + o for o in offsets], s=26, color=color, edgecolors="white", linewidths=0.8, zorder=3)
+        ax.scatter(scores, [y + o for o in offsets],
+                   s=26,
+                   color=color,
+                   edgecolors="white",
+                   linewidths=0.8,
+                   zorder=3)
     ax.set_xscale("logit")
     ticks = [0.001, 0.01, 0.1, 0.5, 0.9, 0.99, 0.999]
     ax.set_xticks(ticks, [str(t) for t in ticks])
@@ -87,12 +99,29 @@ def threshold_calibration():
     ax.grid(axis="x", color=GRID, linewidth=0.6, zorder=0)
     ax.set_xlabel("Най-висока оценка от модела за повторно класиране")
 
-    ax.axvline(RERANK_MIN_SCORE, color=INK, linewidth=1, linestyle=(0, (4, 3)), zorder=2)
-    ax.text(RERANK_MIN_SCORE, 1.6, f" праг {RERANK_MIN_SCORE}", va="top", ha="left", color=INK)
+    ax.axvline(RERANK_MIN_SCORE,
+               color=INK,
+               linewidth=1,
+               linestyle=(0, (4, 3)),
+               zorder=2)
+    ax.text(RERANK_MIN_SCORE,
+            1.6,
+            f" праг {RERANK_MIN_SCORE}",
+            va="top",
+            ha="left",
+            color=INK)
     ooc_max = max(rows[0][1])
     dev_min = min(rows[1][1])
-    ax.annotate(f"{ooc_max:.3f}", (ooc_max, 0), xytext=(0, 9), textcoords="offset points", ha="center", color=INK)
-    ax.annotate(f"{dev_min:.3f}", (dev_min, 1), xytext=(0, 9), textcoords="offset points", ha="center", color=INK)
+    ax.annotate(f"{ooc_max:.3f}", (ooc_max, 0),
+                xytext=(0, 9),
+                textcoords="offset points",
+                ha="center",
+                color=INK)
+    ax.annotate(f"{dev_min:.3f}", (dev_min, 1),
+                xytext=(0, 9),
+                textcoords="offset points",
+                ha="center",
+                color=INK)
     return fig
 
 
@@ -100,7 +129,11 @@ def chunk_lengths():
     tokenizer = load_tokenizer("BAAI/bge-m3")
     lengths = [len(tokenizer.encode(c["text"]).ids) for c in CHUNKS]
     fig, ax = plt.subplots(figsize=(TEXT_WIDTH, 2.6))
-    counts, _, _ = ax.hist(lengths, bins=range(0, 1500 + 1, 50), color=BLUE, edgecolor="white", linewidth=0.8,
+    counts, _, _ = ax.hist(lengths,
+                           bins=range(0, 1500 + 1, 50),
+                           color=BLUE,
+                           edgecolor="white",
+                           linewidth=0.8,
                            zorder=3)
     top = max(counts) * 1.35  # headroom above the bars for the line labels
     ax.set_xlim(0, 1500)
@@ -114,26 +147,44 @@ def chunk_lengths():
     for name, limit in MAX_INPUT.items():
         if limit > 1500:
             continue
-        ax.axvline(limit, color=INK, linewidth=1, linestyle=(0, (4, 3)), zorder=4)
-        ax.text(limit + 12, top * 0.97, labels[limit], va="top", ha="left", color=INK)
+        ax.axvline(limit,
+                   color=INK,
+                   linewidth=1,
+                   linestyle=(0, (4, 3)),
+                   zorder=4)
+        ax.text(limit + 12,
+                top * 0.97,
+                labels[limit],
+                va="top",
+                ha="left",
+                color=INK)
     bge = MAX_INPUT["BAAI/bge-m3"]
-    ax.text(1490, top * 0.97, f"bge-m3: {bge}\n(извън скалата)", va="top", ha="right", color=INK)
+    ax.text(1490,
+            top * 0.97,
+            f"bge-m3: {bge}\n(извън скалата)",
+            va="top",
+            ha="right",
+            color=INK)
     return fig
 
 
 def rank_complementarity():
     runs = load("thesis/retrieval_rankings.json")
-    depth = len(runs["BAAI/bge-m3"][0])  # each method returns this many candidates
+    depth = len(
+        runs["BAAI/bge-m3"][0])  # each method returns this many candidates
     beyond = 90  # where "not among the first `depth`" is drawn on the log axis
 
     def rank(ranking: list[int], gold: int) -> int:
         return ranking.index(gold) + 1 if gold in ranking else beyond
 
-    pairs = Counter((rank(a, g), rank(b, g)) for a, b, g in zip(runs["BAAI/bge-m3"], runs["bm25-stem6"], GOLD))
+    pairs = Counter(
+        (rank(a, g), rank(b, g))
+        for a, b, g in zip(runs["BAAI/bge-m3"], runs["bm25-stem6"], GOLD))
     cut = RERANK_CANDIDATES  # the fused list keeps this many candidates for the reranker
 
     def found(in_a: bool, in_b: bool) -> int:
-        return sum(n for (x, y), n in pairs.items() if (x <= cut) == in_a and (y <= cut) == in_b)
+        return sum(n for (x, y), n in pairs.items()
+                   if (x <= cut) == in_a and (y <= cut) == in_b)
 
     lo, hi = 0.75, 150
     fig, ax = plt.subplots(figsize=(4.6, 4.3))
@@ -150,26 +201,62 @@ def rank_complementarity():
     ax.grid(color=GRID, linewidth=0.6, zorder=0)
 
     # Shaded: both methods have the gold chunk among their first `cut` results.
-    ax.fill_between([lo, cut], lo, cut, color=BLUE, alpha=0.08, linewidth=0, zorder=1)
-    ax.plot([lo, hi], [lo, hi], color=GRID, linewidth=1, zorder=1)  # same position under both methods
+    ax.fill_between([lo, cut],
+                    lo,
+                    cut,
+                    color=BLUE,
+                    alpha=0.08,
+                    linewidth=0,
+                    zorder=1)
+    ax.plot([lo, hi], [lo, hi], color=GRID, linewidth=1,
+            zorder=1)  # same position under both methods
     for line in (ax.axvline, ax.axhline):
-        line(cut, color=INK_MUTED, linewidth=0.9, linestyle=(0, (4, 3)), zorder=2)
+        line(cut,
+             color=INK_MUTED,
+             linewidth=0.9,
+             linestyle=(0, (4, 3)),
+             zorder=2)
 
     for (x, y), n in pairs.items():
-        ax.scatter(x, y, s=26 + 14 * (n - 1), color=BLUE, edgecolors="white", linewidths=0.8, zorder=3)
+        ax.scatter(x,
+                   y,
+                   s=26 + 14 * (n - 1),
+                   color=BLUE,
+                   edgecolors="white",
+                   linewidths=0.8,
+                   zorder=3)
         if n > 1:
-            ax.annotate(f"×{n}", (x, y), xytext=(6, 4), textcoords="offset points", color=INK, fontsize=8)
+            ax.annotate(f"×{n}", (x, y),
+                        xytext=(6, 4),
+                        textcoords="offset points",
+                        color=INK,
+                        fontsize=8)
 
     # One count per quadrant, in its outer corner, where no point lies.
-    box = dict(boxstyle="round,pad=0.25", facecolor="white", edgecolor="none", alpha=0.9)
+    box = dict(boxstyle="round,pad=0.25",
+               facecolor="white",
+               edgecolor="none",
+               alpha=0.9)
     quadrants = [
-        (lo * 1.12, hi * 0.9, "left", "top", f"само семантичното: {found(True, False)}"),
-        (hi * 0.9, hi * 0.9, "right", "top", f"нито един: {found(False, False)}"),
-        (hi * 0.9, lo * 1.1, "right", "bottom", f"само лексикалното: {found(False, True)}"),
-        (cut * 0.88, cut * 0.88, "right", "top", f"и двата метода: {found(True, True)}"),
+        (lo * 1.12, hi * 0.9, "left", "top",
+         f"само семантичното: {found(True, False)}"),
+        (hi * 0.9, hi * 0.9, "right", "top",
+         f"нито един: {found(False, False)}"),
+        (hi * 0.9, lo * 1.1, "right", "bottom",
+         f"само лексикалното: {found(False, True)}"),
+        (cut * 0.88, cut * 0.88, "right", "top",
+         f"и двата метода: {found(True, True)}"),
     ]
     for x, y, ha, va, text in quadrants:
-        ax.text(x, y, text, ha=ha, va=va, color=INK, fontsize=8, bbox=box, zorder=4)
+        ax.text(x,
+                y,
+                text,
+                ha=ha,
+                va=va,
+                color=INK,
+                fontsize=8,
+                bbox=box,
+                zorder=4)
     ax.set_xlabel("Позиция при семантичното търсене (bge-m3)")
     ax.set_ylabel("Позиция при BM25 със съкращаване")
     return fig
@@ -177,7 +264,8 @@ def rank_complementarity():
 
 def main():
     FIGURES_DIR.mkdir(exist_ok=True)
-    for name, draw in (("threshold_calibration", threshold_calibration), ("chunk_lengths", chunk_lengths),
+    for name, draw in (("threshold_calibration", threshold_calibration),
+                       ("chunk_lengths", chunk_lengths),
                        ("rank_complementarity", rank_complementarity)):
         fig = draw()
         path = FIGURES_DIR / f"{name}.pdf"

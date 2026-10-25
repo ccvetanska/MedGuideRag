@@ -24,7 +24,9 @@ from medguiderag.retrieval.reranker import MAX_LENGTH
 
 def main():
     free, total = torch.cuda.mem_get_info()
-    print(f"{torch.__version__} | {torch.cuda.get_device_name(0)} | VRAM free {free / 2**30:.2f} of {total / 2**30:.2f} GB")
+    print(
+        f"{torch.__version__} | {torch.cuda.get_device_name(0)} | VRAM free {free / 2**30:.2f} of {total / 2**30:.2f} GB"
+    )
     retriever = HybridRetriever("BAAI/bge-m3")
     pools = [retriever.candidates(q) for q in QUESTIONS]
     texts = [" ".join(m["text"].split()) for m in retriever.metadata]
@@ -33,7 +35,10 @@ def main():
     cpu = load("thesis/rerank_rankings_cpu.json")
 
     for dtype in (torch.float32, torch.float16):
-        model = CrossEncoder(RERANKER_MODEL, max_length=MAX_LENGTH, device="cuda", model_kwargs={"torch_dtype": dtype})
+        model = CrossEncoder(RERANKER_MODEL,
+                             max_length=MAX_LENGTH,
+                             device="cuda",
+                             model_kwargs={"torch_dtype": dtype})
         model.predict([(QUESTIONS[0], texts[pools[0][0]])])  # warm-up
         torch.cuda.reset_peak_memory_stats()
         torch.cuda.synchronize()
@@ -41,25 +46,33 @@ def main():
         reranked = []
         for q, pool in zip(QUESTIONS, pools):
             scores = model.predict([(q, texts[i]) for i in pool], batch_size=4)
-            reranked.append([pool[j] for j in sorted(range(len(pool)), key=lambda j: -scores[j])])
+            reranked.append([
+                pool[j]
+                for j in sorted(range(len(pool)), key=lambda j: -scores[j])
+            ])
         torch.cuda.synchronize()
         seconds = (time.perf_counter() - start) / len(QUESTIONS)
         same = sum(a[:5] == b[:5] for a, b in zip(reranked, cpu))
-        print(f"reranker {str(dtype):14} {seconds:.2f} s per question (20 pairs) | top 5 identical to the CPU run: "
-              f"{same}/{len(QUESTIONS)} | peak VRAM {torch.cuda.max_memory_allocated() / 2**30:.2f} GB")
+        print(
+            f"reranker {str(dtype):14} {seconds:.2f} s per question (20 pairs) | top 5 identical to the CPU run: "
+            f"{same}/{len(QUESTIONS)} | peak VRAM {torch.cuda.max_memory_allocated() / 2**30:.2f} GB"
+        )
         del model
         torch.cuda.empty_cache()
 
     def vectors(index_dir: Path, count: int):
-        return faiss.read_index(str(index_dir / model_slug("BAAI/bge-m3") / "chunks.index")).reconstruct_n(0, count)
+        return faiss.read_index(
+            str(index_dir / model_slug("BAAI/bge-m3") /
+                "chunks.index")).reconstruct_n(0, count)
 
     with tempfile.TemporaryDirectory() as tmp:
         stats = build_index("BAAI/bge-m3", index_dir=Path(tmp))
         new = vectors(Path(tmp), stats["num_chunks"])
     old = vectors(INDEX_DIR, stats["num_chunks"])
     cos = (old * new).sum(1)
-    print(f"bge-m3 index built on the GPU in {stats['embedding_seconds']:.0f} s | cosine to the CPU-built vectors: "
-          f"min {cos.min():.5f}, mean {cos.mean():.5f}")
+    print(
+        f"bge-m3 index built on the GPU in {stats['embedding_seconds']:.0f} s | cosine to the CPU-built vectors: "
+        f"min {cos.min():.5f}, mean {cos.mean():.5f}")
 
 
 if __name__ == "__main__":

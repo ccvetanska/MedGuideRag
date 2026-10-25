@@ -19,6 +19,6 @@ set OPENBLAS_NUM_THREADS=2
 set MKL_NUM_THREADS=2
 set TOKENIZERS_PARALLELISM=false
 
-rem Listen on localhost only: by default Streamlit is reachable from the whole network.
+rem Listen on localhost only
 ".venv\Scripts\python.exe" -m streamlit run src\medguiderag\app\ui.py --server.address localhost --browser.gatherUsageStats false
 pause

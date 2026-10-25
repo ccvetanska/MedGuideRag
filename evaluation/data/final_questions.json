@@ -1,10 +1,4 @@
 {
- "_указания": [
-  "Попълнете question, page, quote и facts за F01-F59 и question за O01-O10 (при O08-O10 и document). Не променяйте id, guideline и document.",
-  "Въпросите за едно ръководство трябва да са за различни места в него. PDF файловете са в ../Pdp/RawData/.",
-  "Подробни указания: evaluation/README.md, раздел „Окончателна оценка“.",
-  "Проверка по всяко време, и при частично попълнен файл: python -m evaluation.final_eval check"
- ],
  "in_scope": [
   {
    "id": "F01",

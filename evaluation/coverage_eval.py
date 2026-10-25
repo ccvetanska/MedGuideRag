@@ -20,18 +20,28 @@ def main():
     dev_contexts = load("thesis/dev_contexts_hybrid.json")
     final = load(BEFORE)
     sets = {
-        "development set (in scope)": [(d["question"], chunks_by_id(dev_contexts[d["question"]])) for d in DEV],
-        "final set, in scope": [(r["question"], chunks_by_id(r["chunk_ids"])) for r in final if r["id"].startswith("F")],
-        "final set, out of scope": [(r["question"], chunks_by_id(r["chunk_ids"])) for r in final if r["id"].startswith("O")],
+        "development set (in scope)":
+        [(d["question"], chunks_by_id(dev_contexts[d["question"]]))
+         for d in DEV],
+        "final set, in scope": [(r["question"], chunks_by_id(r["chunk_ids"]))
+                                for r in final if r["id"].startswith("F")],
+        "final set, out of scope":
+        [(r["question"], chunks_by_id(r["chunk_ids"])) for r in final
+         if r["id"].startswith("O")],
     }
     texts = [c["text"] for c in CHUNKS]
     checker = CoverageChecker(texts)
-    print(f"specific word: stem in at most {COVERAGE_MAX_CHUNKS} of {len(CHUNKS)} chunks")
+    print(
+        f"specific word: stem in at most {COVERAGE_MAX_CHUNKS} of {len(CHUNKS)} chunks"
+    )
     for name, items in sets.items():
         results = [checker.check(q, ch) for q, ch in items]
-        stopped = [(q, c) for (q, _), c in zip(items, results) if not c.answerable]
+        stopped = [(q, c) for (q, _), c in zip(items, results)
+                   if not c.answerable]
         low, high = wilson(len(stopped), len(items))
-        print(f"\n{name}: stopped {len(stopped)}/{len(items)} (95% CI {low:.0%}-{high:.0%})")
+        print(
+            f"\n{name}: stopped {len(stopped)}/{len(items)} (95% CI {low:.0%}-{high:.0%})"
+        )
         for q, c in stopped:
             print(f"  {c.reason:6} {', '.join(c.terms):30} | {q}")
 
@@ -39,12 +49,19 @@ def main():
     out = sets["final set, out of scope"]
     after = [not checker.check(q, ch).answerable for q, ch in out]
     only_before, only_after, p = mcnemar([False] * len(out), after)
-    print(f"\nout of scope, refused before -> after: 0 -> {sum(after)} of {len(out)}; McNemar exact p = {p:.4f}")
+    print(
+        f"\nout of scope, refused before -> after: 0 -> {sum(after)} of {len(out)}; McNemar exact p = {p:.4f}"
+    )
 
-    print("\nsensitivity (stopped: development / final in scope / final out of scope):")
+    print(
+        "\nsensitivity (stopped: development / final in scope / final out of scope):"
+    )
     for limit in (5, 10, 20, 30, 40, 60, 80):
         c = CoverageChecker(texts, max_chunks=limit)
-        counts = [sum(not c.check(q, ch).answerable for q, ch in items) for items in sets.values()]
+        counts = [
+            sum(not c.check(q, ch).answerable for q, ch in items)
+            for items in sets.values()
+        ]
         print(f"  {limit:3} chunks: " + " / ".join(map(str, counts)))
 
 

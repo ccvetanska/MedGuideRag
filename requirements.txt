@@ -1,25 +1,8 @@
 numpy>=1.26
-
-# Embeddings: multilingual sentence-transformers models, compared empirically
-# (BAAI/bge-m3, intfloat/multilingual-e5-base, paraphrase-multilingual-mpnet-base-v2).
 sentence-transformers>=3.0
-# PyTorch with CUDA (NVIDIA GPU): install after the package above, which pulls a CPU-only build,
-#   pip install --no-cache-dir "torch==2.14.0+cu126" --index-url https://download.pytorch.org/whl/cu126
-
-# Lexical search (BM25) for hybrid retrieval.
 rank_bm25>=0.2
-
-# Vector store: FAISS (in-process, no server - suitable for a corpus of ~1380 chunks).
 faiss-cpu>=1.8
-
-# Local generative model: BgGPT (INSAIT) via Ollama - requires an installed Ollama daemon (https://ollama.com)
 ollama>=0.3
-
-# Demo web application.
 streamlit>=1.37
-
-# Figures in the thesis (python -m evaluation.figures).
 matplotlib>=3.9
-
-# BulStem, the Bulgarian stemmer compared with the prefix truncation of BM25
 bulstem>=0.3.3
